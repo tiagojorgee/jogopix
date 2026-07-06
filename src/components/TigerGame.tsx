@@ -26,6 +26,7 @@ export const TigerGame: React.FC<TigerGameProps> = ({
   addLog,
   onExit
 }) => {
+  const playerLevel = stats.level ?? 1;
   const [bet, setBet] = useState<number>(20);
   const [grid, setGrid] = useState<string[][]>([
     ['🍊', '🧧', '🍊'],
@@ -38,6 +39,18 @@ export const TigerGame: React.FC<TigerGameProps> = ({
   const [isRoundBoosted, setIsRoundBoosted] = useState<boolean>(false);
 
   const availableBets = [10, 20, 50, 100, 250];
+
+  const getBetLevelReq = (amt: number): number => {
+    if (amt <= 20) return 1;
+    if (amt === 50) return 2;
+    if (amt === 100) return 4;
+    if (amt === 250) return 6;
+    return 1;
+  };
+
+  const isBetLocked = (amt: number): boolean => {
+    return playerLevel < getBetLevelReq(amt);
+  };
 
   const getRandomSymbol = () => {
     const totalWeight = TIGER_SYMBOLS.reduce((sum, item) => sum + item.weight, 0);
@@ -134,12 +147,20 @@ export const TigerGame: React.FC<TigerGameProps> = ({
       if (totalMultiplier > 0) {
         const payout = bet * totalMultiplier;
         registerWin(payout);
-        updateStats(prev => ({ ...prev, coins: prev.coins + payout }));
+        updateStats(prev => ({ 
+          ...prev, 
+          coins: prev.coins + payout,
+          points: (prev.points ?? 0) + 30 // +30 XP for winning
+        }));
         addLog('earn', `Vitória no Fortune Tiger (${totalMultiplier}x)`, payout, 'coins');
         setRecentWin(payout);
         playSound.victory();
         setSpinMessage(`🐯 Miau! O Tigre Rugiu! Você alinhou combinações de {${totalMultiplier}x} e ganhou 🪙 ${payout} moedas!`);
       } else {
+        updateStats(prev => ({
+          ...prev,
+          points: (prev.points ?? 0) + 10 // +10 XP for play effort
+        }));
         playSound.gameover();
         setSpinMessage('Não foi dessa vez. Solte a pata novamente, o tigre está faminto!');
       }
@@ -243,23 +264,37 @@ export const TigerGame: React.FC<TigerGameProps> = ({
               Definir Aposta
             </span>
             <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-              {availableBets.map((amount) => (
-                <button
-                  key={amount}
-                  disabled={isSpinning}
-                  onClick={() => {
-                    setBet(amount);
-                    playSound.click();
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
-                    bet === amount
-                      ? 'bg-amber-600 text-slate-950 shadow-md shadow-amber-600/30'
-                      : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
-                  }`}
-                >
-                  {amount}
-                </button>
-              ))}
+              {availableBets.map((amount) => {
+                const locked = isBetLocked(amount);
+                const req = getBetLevelReq(amount);
+                return (
+                  <button
+                    key={amount}
+                    disabled={isSpinning}
+                    onClick={() => {
+                      if (locked) {
+                        setSpinMessage(`Aposta bloqueada! O valor 🪙 ${amount} requer Nível ${req}.`);
+                        try {
+                          playSound.gameover();
+                        } catch (err) {}
+                        return;
+                      }
+                      setBet(amount);
+                      playSound.click();
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                      bet === amount
+                        ? 'bg-amber-600 text-slate-950 shadow-md shadow-amber-600/30'
+                        : locked
+                        ? 'bg-slate-950/40 text-slate-600 border border-slate-950/60 cursor-not-allowed opacity-50'
+                        : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
+                    }`}
+                    title={locked ? `Requer Nível ${req}` : `Aposta de 🪙 ${amount}`}
+                  >
+                    {locked ? `🔒 ${amount}` : amount}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

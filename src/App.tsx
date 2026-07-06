@@ -10,6 +10,7 @@ import { WithdrawSection } from './components/WithdrawSection';
 import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
+import { getLevelForPoints, SKIN_LEVELS, ACCESSORY_LEVELS, AURA_LEVELS } from './utils/levelManager';
 
 export default function App() {
   // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque'
@@ -24,14 +25,7 @@ export default function App() {
   // Initialize state with default values or localStorage
   const [stats, setStats] = useState<PlayerStats>(() => {
     const cached = localStorage.getItem('gamezone_player_stats');
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (e) {
-        console.error('Error parsing cached player stats:', e);
-      }
-    }
-    return {
+    const defaultStats = {
       coins: 150, // Starts with a small bonus of 150 coins to test the customizer immediately!
       lives: 3,
       currentStage: 1,
@@ -43,9 +37,95 @@ export default function App() {
         skin: 'classic',
         accessory: 'none',
         aura: 'none'
-      }
+      },
+      points: 0,
+      level: 1
     };
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        return {
+          ...defaultStats,
+          ...parsed,
+          points: parsed.points ?? 0,
+          level: parsed.level ?? 1
+        };
+      } catch (e) {
+        console.error('Error parsing cached player stats:', e);
+      }
+    }
+    return defaultStats;
   });
+
+  // Intercept stats updates to handle point awards and level-up events
+  const updateStats = (updater: (prev: PlayerStats) => PlayerStats) => {
+    setStats((prev) => {
+      const updated = updater(prev);
+      const prevPoints = prev.points ?? 0;
+      const updatedPoints = updated.points ?? prevPoints;
+      
+      const { level: newLevel } = getLevelForPoints(updatedPoints);
+      const prevLevel = prev.level ?? 1;
+
+      // Handle unlocking of rewards automatically!
+      let unlockedSkins = [...(updated.unlockedSkins ?? prev.unlockedSkins ?? ['classic'])];
+      let unlockedAccessories = [...(updated.unlockedAccessories ?? prev.unlockedAccessories ?? ['none'])];
+      let unlockedAuras = [...(updated.unlockedAuras ?? prev.unlockedAuras ?? ['none'])];
+
+      // Check for rewards that get unlocked at specific levels
+      if (newLevel > prevLevel) {
+        // Find which items should unlock up to this level
+        const newlyUnlocked: string[] = [];
+
+        // Check skins
+        Object.entries(SKIN_LEVELS).forEach(([id, reqLevel]) => {
+          if (reqLevel <= newLevel && !unlockedSkins.includes(id)) {
+            unlockedSkins.push(id);
+            const skinName = SKINS.find(s => s.id === id)?.name || id;
+            newlyUnlocked.push(`Pele ${skinName}`);
+          }
+        });
+
+        // Check accessories
+        Object.entries(ACCESSORY_LEVELS).forEach(([id, reqLevel]) => {
+          if (reqLevel <= newLevel && !unlockedAccessories.includes(id)) {
+            unlockedAccessories.push(id);
+            const accName = ACCESSORIES.find(a => a.id === id)?.name || id;
+            newlyUnlocked.push(`Acessório ${accName}`);
+          }
+        });
+
+        // Check auras
+        Object.entries(AURA_LEVELS).forEach(([id, reqLevel]) => {
+          if (reqLevel <= newLevel && !unlockedAuras.includes(id)) {
+            unlockedAuras.push(id);
+            const auraName = AURAS.find(a => a.id === id)?.name || id;
+            newlyUnlocked.push(`Aura ${auraName}`);
+          }
+        });
+
+        setTimeout(() => {
+          try {
+            playSound.jackpot();
+          } catch (err) {}
+          let unlockMsg = `🎉 PARABÉNS! Você alcançou o Nível ${newLevel}! 👑`;
+          if (newlyUnlocked.length > 0) {
+            unlockMsg += ` Desbloqueado gratuitamente: ${newlyUnlocked.join(', ')}!`;
+          }
+          setAppToast(unlockMsg);
+        }, 150);
+      }
+
+      return {
+        ...updated,
+        unlockedSkins,
+        unlockedAccessories,
+        unlockedAuras,
+        points: updatedPoints,
+        level: newLevel
+      };
+    });
+  };
 
   // Lifted financial states for synchronization and monetization headers
   const [realBalance, setRealBalance] = useState<number>(() => {
@@ -195,10 +275,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+      
+      {/* Decorative Fluid Ambient Glowing Backdrops */}
+      <div className="absolute top-[-15%] left-[-15%] w-[60%] h-[50%] rounded-full bg-indigo-600/5 blur-[130px] pointer-events-none animate-float" />
+      <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[50%] rounded-full bg-purple-600/5 blur-[130px] pointer-events-none animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-blue-600/3 blur-[140px] pointer-events-none animate-float" style={{ animationDelay: '6s' }} />
       
       {/* Upper security announcement ribbon */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-1.5 text-center text-[10px] md:text-xs text-slate-400 font-mono flex items-center justify-center gap-2">
+      <div className="bg-slate-950 border-b border-slate-900 px-4 py-1.5 text-center text-[10px] md:text-xs text-slate-400 font-mono flex items-center justify-center gap-2 relative z-10">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
         <span>SISTEMA DE PAGAMENTO CRIPTOGRAFADO ATIVO — CONEXÃO SEGURA SSL</span>
       </div>
@@ -233,7 +318,7 @@ export default function App() {
         {activeTab === 'games' && (
           <GamePortal
             stats={stats}
-            updateStats={setStats}
+            updateStats={updateStats}
             addLog={addLog}
             openShop={() => setActiveTab('shop')}
             openCheckoutForQuickBuy={openCheckoutForQuickBuy}
@@ -243,7 +328,7 @@ export default function App() {
         {activeTab === 'avatar' && (
           <AvatarCustomizer
             stats={stats}
-            updateStats={setStats}
+            updateStats={updateStats}
             addLog={addLog}
             openCheckoutForCoins={() => setActiveTab('shop')}
           />
@@ -252,7 +337,7 @@ export default function App() {
         {activeTab === 'shop' && (
           <Shop
             stats={stats}
-            updateStats={setStats}
+            updateStats={updateStats}
             addLog={addLog}
             openCheckout={(item) => setCheckoutItem(item)}
           />
@@ -267,7 +352,7 @@ export default function App() {
         {activeTab === 'saque' && (
           <WithdrawSection
             stats={stats}
-            updateStats={setStats}
+            updateStats={updateStats}
             addLog={addLog}
             realBalance={realBalance}
             setRealBalance={setRealBalance}

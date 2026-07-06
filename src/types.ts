@@ -30,6 +30,8 @@ export interface PlayerStats {
   avatar: AvatarConfig;
   isVip?: boolean;
   rtpBoostSpins?: number;
+  points?: number;
+  level?: number;
 }
 
 export interface TransactionLog {

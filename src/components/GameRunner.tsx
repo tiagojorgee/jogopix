@@ -357,7 +357,8 @@ export const GameRunner: React.FC<GameRunnerProps> = ({
       const nextLives = Math.max(0, prev.lives - 1);
       return {
         ...prev,
-        lives: nextLives
+        lives: nextLives,
+        points: (prev.points ?? 0) + 10 // +10 XP for play effort
       };
     });
     addLog('purchase_booster', `Perdeu vida jogando ${gameId === 'jumper' ? 'Pixel Jumper' : 'Neon Clicker'}`, 1, 'coins');
@@ -369,7 +370,8 @@ export const GameRunner: React.FC<GameRunnerProps> = ({
       ...prev,
       currentStage: prev.currentStage + 1,
       coins: prev.coins + coinReward,
-      highScore: Math.max(prev.highScore, score)
+      highScore: Math.max(prev.highScore, score),
+      points: (prev.points ?? 0) + 60 // +60 XP for stage completion
     }));
     addLog('earn', `Ganhou recompensa por limpar Nível ${stats.currentStage}`, coinReward, 'coins');
   };
@@ -395,7 +397,8 @@ export const GameRunner: React.FC<GameRunnerProps> = ({
         unlockedAccessories: nextAccessories,
         currentStage: prev.currentStage + 1,
         // Award bonus coins for clearing stage!
-        coins: prev.coins + 100
+        coins: prev.coins + 100,
+        points: (prev.points ?? 0) + 30 // +30 XP for skipping stage
       };
     });
 

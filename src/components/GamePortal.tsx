@@ -108,19 +108,19 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-3 md:p-6 max-w-5xl mx-auto space-y-6">
       
       {/* Hero Welcome Banner */}
-      <div className="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="relative bg-gradient-to-br from-slate-900/80 via-indigo-950/30 to-purple-950/40 border border-indigo-500/15 rounded-2xl p-5 md:p-8 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-md">
         {/* Tech decorative curves */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none animate-pulse duration-[8s]" />
         <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-purple-500/5 rounded-full filter blur-2xl pointer-events-none" />
         
         <div className="space-y-3 relative z-10 text-center md:text-left max-w-lg">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-bold font-mono rounded-full border border-indigo-500/20">
-            <Zap className="w-3.5 h-3.5" /> ARENA ARCADE DISPONÍVEL
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-400 text-[10px] md:text-xs font-black font-mono rounded-full border border-indigo-500/20">
+            <Zap className="w-3.5 h-3.5 text-indigo-400 animate-bounce" /> ARENA ARCADE ATIVA
           </span>
-          <h2 className="text-2xl md:text-3xl font-black text-white leading-tight font-sans">
+          <h2 className="text-xl md:text-3xl font-black text-white leading-tight font-sans tracking-tight">
             Entre na Arena, Supere as Etapas e Colecione Troféus!
           </h2>
           <p className="text-slate-400 text-xs md:text-sm leading-relaxed">
@@ -129,8 +129,8 @@ export const GamePortal: React.FC<GamePortalProps> = ({
         </div>
 
         {/* Quick metrics visual */}
-        <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex flex-col gap-2 min-w-[200px] text-xs font-mono text-slate-300 relative z-10 w-full md:w-auto">
-          <div className="text-[10px] text-slate-500 uppercase tracking-widest text-center border-b border-slate-850 pb-1.5 mb-1 font-bold">
+        <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-900 flex flex-col gap-2 min-w-[200px] text-xs font-mono text-slate-300 relative z-10 w-full md:w-auto">
+          <div className="text-[10px] text-slate-500 uppercase tracking-widest text-center border-b border-slate-900 pb-1.5 mb-1 font-bold">
             Status do Piloto
           </div>
           <div className="flex justify-between">
@@ -154,25 +154,26 @@ export const GamePortal: React.FC<GamePortalProps> = ({
 
       {/* Bento Grid: Game cards list */}
       <div className="space-y-4">
-        <h3 className="text-md font-extrabold uppercase tracking-widest text-slate-400 font-mono">
-          Nossos Minijogos Disponíveis
+        <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 font-mono flex items-center gap-2">
+          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+          Minijogos da Arena
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* Card 1: Pixel Jumper */}
-          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-indigo-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-indigo-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">
+                <div className="p-3 bg-indigo-550/10 rounded-xl border border-indigo-500/10 group-hover:bg-indigo-500/15 group-hover:border-indigo-500/25 transition-all duration-300">
                   <Swords className="w-6 h-6 text-indigo-400" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-indigo-300 bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-800/35">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-indigo-300 bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-800/25">
                   Dificuldade: Média
                 </span>
               </div>
               <div className="space-y-1.5">
-                <h4 className="text-lg font-extrabold text-white group-hover:text-indigo-400 transition-colors">
+                <h4 className="text-lg font-black text-white group-hover:text-indigo-400 transition-colors tracking-tight">
                   Pixel Jumper Arcade
                 </h4>
                 <p className="text-slate-400 text-xs leading-relaxed">
@@ -181,13 +182,13 @@ export const GamePortal: React.FC<GamePortalProps> = ({
               </div>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
               <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-rose-400">1 Vida (em caso de derrota)</strong>
+                Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
               </div>
               <button
                 onClick={() => setActiveGame('jumper')}
-                className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-jumper"
               >
                 <PlayCircle className="w-4 h-4" /> Jogar
@@ -196,18 +197,18 @@ export const GamePortal: React.FC<GamePortalProps> = ({
           </div>
 
           {/* Card 2: Neon Clicker */}
-          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-purple-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-purple-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20 group-hover:bg-purple-500/20 transition-colors">
+                <div className="p-3 bg-purple-550/10 rounded-xl border border-purple-500/10 group-hover:bg-purple-500/15 group-hover:border-purple-500/25 transition-all duration-300">
                   <Trophy className="w-6 h-6 text-purple-400" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-full border border-purple-800/35">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-full border border-purple-800/25">
                   Dificuldade: Ágil
                 </span>
               </div>
               <div className="space-y-1.5">
-                <h4 className="text-lg font-extrabold text-white group-hover:text-purple-400 transition-colors">
+                <h4 className="text-lg font-black text-white group-hover:text-purple-400 transition-colors tracking-tight">
                   Neon Portal Clicker
                 </h4>
                 <p className="text-slate-400 text-xs leading-relaxed">
@@ -216,13 +217,13 @@ export const GamePortal: React.FC<GamePortalProps> = ({
               </div>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
               <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-rose-400">1 Vida (em caso de derrota)</strong>
+                Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
               </div>
               <button
                 onClick={() => setActiveGame('clicker')}
-                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/15 hover:shadow-purple-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-clicker"
               >
                 <PlayCircle className="w-4 h-4" /> Jogar
@@ -231,18 +232,18 @@ export const GamePortal: React.FC<GamePortalProps> = ({
           </div>
 
           {/* Card 4: Cyber Roulette da Sorte */}
-          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-cyan-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-cyan-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/20 group-hover:bg-cyan-500/20 transition-colors">
+                <div className="p-3 bg-cyan-550/10 rounded-xl border border-cyan-500/10 group-hover:bg-cyan-500/15 group-hover:border-cyan-500/25 transition-all duration-300">
                   <Star className="w-6 h-6 text-cyan-400" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-800/35">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-800/25">
                   Giro: Equiprovável
                 </span>
               </div>
               <div className="space-y-1.5">
-                <h4 className="text-lg font-extrabold text-white group-hover:text-cyan-400 transition-colors">
+                <h4 className="text-lg font-black text-white group-hover:text-cyan-400 transition-colors tracking-tight">
                   Roleta Cyber da Sorte
                 </h4>
                 <p className="text-slate-400 text-xs leading-relaxed">
@@ -251,7 +252,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
               </div>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
               <div className="text-[10px] text-slate-500 font-mono">
                 Custo de jogo: <strong className="text-cyan-400">🪙 30 Moedas</strong>
               </div>
@@ -260,7 +261,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                   setActiveGame('roulette');
                   playSound.click();
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/15 hover:shadow-cyan-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-roulette"
               >
                 <PlayCircle className="w-4 h-4" /> Girar Roleta
@@ -269,18 +270,18 @@ export const GamePortal: React.FC<GamePortalProps> = ({
           </div>
 
           {/* Card 5: Fortune Tiger */}
-          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-amber-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-amber-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors">
+                <div className="p-3 bg-amber-550/10 rounded-xl border border-amber-500/10 group-hover:bg-amber-500/15 group-hover:border-amber-500/25 transition-all duration-300">
                   <Flame className="w-6 h-6 text-amber-500" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-amber-300 bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-800/35">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-amber-300 bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-800/25">
                   Multiplicador: Até 20x
                 </span>
               </div>
               <div className="space-y-1.5">
-                <h4 className="text-lg font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                <h4 className="text-lg font-black text-white group-hover:text-amber-400 transition-colors tracking-tight">
                   Fortune Tiger VIP 🐯
                 </h4>
                 <p className="text-slate-400 text-xs leading-relaxed">
@@ -289,7 +290,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
               </div>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
               <div className="text-[10px] text-slate-500 font-mono">
                 Custo de jogo: <strong className="text-amber-400">Moedas (Sua Aposta)</strong>
               </div>
@@ -298,7 +299,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                   setActiveGame('tiger');
                   playSound.click();
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-600/25 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-600/20 hover:shadow-amber-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-tiger"
               >
                 <PlayCircle className="w-4 h-4 text-slate-950" /> Soltar o Tigre
@@ -307,18 +308,18 @@ export const GamePortal: React.FC<GamePortalProps> = ({
           </div>
 
           {/* Card 6: Aviator Crash */}
-          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-rose-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-rose-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 group-hover:bg-rose-500/20 transition-colors">
+                <div className="p-3 bg-rose-550/10 rounded-xl border border-rose-500/10 group-hover:bg-rose-500/15 group-hover:border-rose-500/25 transition-all duration-300">
                   <Plane className="w-6 h-6 text-rose-500" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-rose-300 bg-rose-950/40 px-2.5 py-1 rounded-full border border-rose-800/35">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-rose-300 bg-rose-950/40 px-2.5 py-1 rounded-full border border-rose-800/25">
                   Decolagem: Multiplicador Vivo
                 </span>
               </div>
               <div className="space-y-1.5">
-                <h4 className="text-lg font-extrabold text-white group-hover:text-rose-400 transition-colors">
+                <h4 className="text-lg font-black text-white group-hover:text-rose-400 transition-colors tracking-tight">
                   Aviator Crash ✈️
                 </h4>
                 <p className="text-slate-400 text-xs leading-relaxed">
@@ -327,7 +328,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
               </div>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
               <div className="text-[10px] text-slate-500 font-mono">
                 Custo de jogo: <strong className="text-rose-400">Moedas (Sua Aposta)</strong>
               </div>
@@ -336,10 +337,10 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                   setActiveGame('aviator');
                   playSound.click();
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4.5 py-2 bg-rose-600 hover:bg-rose-550 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-600/15 hover:shadow-rose-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-aviator"
               >
-                <PlayCircle className="w-4 h-4 text-slate-950" /> Decolar Saldo
+                <PlayCircle className="w-4 h-4 text-white" /> Decolar Saldo
               </button>
             </div>
           </div>
@@ -351,14 +352,14 @@ export const GamePortal: React.FC<GamePortalProps> = ({
       <AdBanner position="bottom" />
 
       {/* Guide Footer Info: Lives, Stage skips, etc */}
-      <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-5 space-y-4">
+      <div className="bg-slate-900/30 rounded-2xl border border-slate-900 p-5 space-y-4 backdrop-blur-xs">
         <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           Como avançar se as fases estiverem difíceis?
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-400">
-          <div className="space-y-1 bg-slate-950/50 p-3 rounded-xl border border-slate-850">
+          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
             <h5 className="font-bold text-slate-200 flex items-center gap-1">
               ❤️ Comprar Vidas
             </h5>
@@ -367,7 +368,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
             </p>
           </div>
 
-          <div className="space-y-1 bg-slate-950/50 p-3 rounded-xl border border-slate-850">
+          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
             <h5 className="font-bold text-slate-200 flex items-center gap-1">
               ⏩ Avançar de Fase
             </h5>
@@ -376,7 +377,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
             </p>
           </div>
 
-          <div className="space-y-1 bg-slate-950/50 p-3 rounded-xl border border-slate-850">
+          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
             <h5 className="font-bold text-slate-200 flex items-center gap-1">
               🪙 Loja Integrada Segura
             </h5>

@@ -18,6 +18,7 @@ export const AviatorGame: React.FC<AviatorGameProps> = ({
   addLog,
   onExit
 }) => {
+  const playerLevel = stats.level ?? 1;
   const [bet, setBet] = useState<number>(20);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [multiplier, setMultiplier] = useState<number>(1.00);
@@ -32,6 +33,18 @@ export const AviatorGame: React.FC<AviatorGameProps> = ({
   const currentMultiplierRef = useRef<number>(1.00);
 
   const availableBets = [10, 20, 50, 100, 250];
+
+  const getBetLevelReq = (amt: number): number => {
+    if (amt <= 20) return 1;
+    if (amt === 50) return 2;
+    if (amt === 100) return 4;
+    if (amt === 250) return 6;
+    return 1;
+  };
+
+  const isBetLocked = (amt: number): boolean => {
+    return playerLevel < getBetLevelReq(amt);
+  };
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -106,6 +119,10 @@ export const AviatorGame: React.FC<AviatorGameProps> = ({
     }
     setGameState('crashed');
     setIsPlaying(false);
+    updateStats((prev) => ({
+      ...prev,
+      points: (prev.points ?? 0) + 10 // +10 XP for effort
+    }));
     playSound.gameover();
     setMessage(`✈️ Decolou para o infinito! O avião sumiu a ${multiplier.toFixed(2)}x e você perdeu as moedas apostadas.`);
   };
@@ -133,7 +150,8 @@ export const AviatorGame: React.FC<AviatorGameProps> = ({
     registerWin(finalPayout);
     updateStats((prev) => ({
       ...prev,
-      coins: prev.coins + finalPayout
+      coins: prev.coins + finalPayout,
+      points: (prev.points ?? 0) + 30 // +30 XP for winning
     }));
     addLog('earn', `Lucro no Aviãozinho (${multiplier.toFixed(2)}x)`, finalPayout, 'coins');
 
@@ -251,23 +269,37 @@ export const AviatorGame: React.FC<AviatorGameProps> = ({
               Definir Aposta do Voo
             </span>
             <div className="flex items-center gap-1.5 justify-center sm:justify-start">
-              {availableBets.map((amount) => (
-                <button
-                  key={amount}
-                  disabled={isPlaying}
-                  onClick={() => {
-                    setBet(amount);
-                    playSound.click();
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
-                    bet === amount
-                      ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                      : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
-                  }`}
-                >
-                  {amount}
-                </button>
-              ))}
+              {availableBets.map((amount) => {
+                const locked = isBetLocked(amount);
+                const req = getBetLevelReq(amount);
+                return (
+                  <button
+                    key={amount}
+                    disabled={isPlaying}
+                    onClick={() => {
+                      if (locked) {
+                        setMessage(`Aposta bloqueada! O valor 🪙 ${amount} requer Nível ${req}.`);
+                        try {
+                          playSound.gameover();
+                        } catch (err) {}
+                        return;
+                      }
+                      setBet(amount);
+                      playSound.click();
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                      bet === amount
+                        ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                        : locked
+                        ? 'bg-slate-950/40 text-slate-600 border border-slate-950/60 cursor-not-allowed opacity-50'
+                        : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
+                    }`}
+                    title={locked ? `Requer Nível ${req}` : `Aposta de 🪙 ${amount}`}
+                  >
+                    {locked ? `🔒 ${amount}` : amount}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

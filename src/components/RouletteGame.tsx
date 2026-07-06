@@ -308,7 +308,10 @@ export const RouletteGame: React.FC<RouletteGameProps> = ({
   addLog,
   onExit
 }) => {
-  const [activeRoom, setActiveRoom] = useState<'bronze' | 'neon' | 'gold'>('neon');
+  const playerLevel = stats.level ?? 1;
+  const [activeRoom, setActiveRoom] = useState<'bronze' | 'neon' | 'gold'>(() => {
+    return (stats.level ?? 1) >= 3 ? 'neon' : 'bronze';
+  });
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [message, setMessage] = useState<string>('Selecione uma sala de roleta e clique em Girar!');
@@ -319,6 +322,20 @@ export const RouletteGame: React.FC<RouletteGameProps> = ({
 
   const handleRoomSelect = (room: 'bronze' | 'neon' | 'gold') => {
     if (isSpinning) return;
+    if (room === 'neon' && playerLevel < 3) {
+      setMessage('Nível insuficiente! A Roleta Neon VIP é desbloqueada no Nível 3.');
+      try {
+        playSound.gameover();
+      } catch (err) {}
+      return;
+    }
+    if (room === 'gold' && playerLevel < 5) {
+      setMessage('Nível insuficiente! A Roleta Imperial Ouro é desbloqueada no Nível 5.');
+      try {
+        playSound.gameover();
+      } catch (err) {}
+      return;
+    }
     setActiveRoom(room);
     setMessage(`Sala alterada para ${room === 'bronze' ? 'Roleta de Bronze' : room === 'neon' ? 'Roleta Neon VIP' : 'Roleta Imperial Ouro'}! Custo por giro: 🪙 ${room === 'bronze' ? 10 : room === 'neon' ? 30 : 100} moedas.`);
     setCurrentWin(null);
@@ -413,7 +430,12 @@ export const RouletteGame: React.FC<RouletteGameProps> = ({
       // Update stats cleanly
       updateStats((prev) => {
         const res = sector.action(prev);
-        return res.stats;
+        const isJackpot = sector.label.includes('👑') || sector.label.includes('500') || sector.label.includes('1500');
+        const pointsEarned = isJackpot ? 50 : 15; // +50 XP for jackpot, +15 XP for spin
+        return {
+          ...res.stats,
+          points: (prev.points ?? 0) + pointsEarned
+        };
       });
 
       // Register actual win
@@ -456,8 +478,9 @@ export const RouletteGame: React.FC<RouletteGameProps> = ({
       
       {/* Rooms Switcher Bar */}
       <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider pl-2">
+        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider pl-2 flex items-center gap-1">
           Salas de Roleta Disponíveis:
+          <span className="text-slate-500 font-normal text-[9px]">(Níveis: Bronze Lvl 1, Neon Lvl 3, Imperial Lvl 5)</span>
         </span>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
@@ -474,24 +497,28 @@ export const RouletteGame: React.FC<RouletteGameProps> = ({
           <button
             onClick={() => handleRoomSelect('neon')}
             disabled={isSpinning}
-            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeRoom === 'neon'
                 ? 'bg-cyan-600/80 text-white border border-cyan-500 shadow-md'
+                : playerLevel < 3
+                ? 'text-slate-600 cursor-not-allowed bg-slate-950/20'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
-            Neon VIP 🥈 (🪙 30)
+            {playerLevel < 3 && '🔒'} Neon VIP 🥈 (🪙 30)
           </button>
           <button
             onClick={() => handleRoomSelect('gold')}
             disabled={isSpinning}
-            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeRoom === 'gold'
                 ? 'bg-yellow-600 text-slate-950 font-extrabold border border-yellow-500 shadow-md shadow-yellow-500/10'
+                : playerLevel < 5
+                ? 'text-slate-600 cursor-not-allowed bg-slate-950/20'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
-            Imperial Ouro 🥇 (🪙 100)
+            {playerLevel < 5 && '🔒'} Imperial Ouro 🥇 (🪙 100)
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { SKINS, ACCESSORIES, AURAS } from '../data/shopItems';
 import { AvatarRenderer } from './AvatarRenderer';
 import { Sparkles, Check, Lock, Coins, Shuffle, HelpCircle } from 'lucide-react';
 import { playSound } from '../utils/audio';
+import { SKIN_LEVELS, ACCESSORY_LEVELS, AURA_LEVELS } from '../utils/levelManager';
 
 interface AvatarCustomizerProps {
   stats: PlayerStats;
@@ -22,7 +23,17 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  const playerLevel = stats.level ?? 1;
+
   const equipItem = (category: 'skin' | 'accessory' | 'aura', id: string) => {
+    const levels = category === 'skin' ? SKIN_LEVELS : category === 'accessory' ? ACCESSORY_LEVELS : AURA_LEVELS;
+    const reqLevel = levels[id] ?? 1;
+    const unlockedField = category === 'skin' ? 'unlockedSkins' : category === 'accessory' ? 'unlockedAccessories' : 'unlockedAuras';
+    if (playerLevel < reqLevel && !stats[unlockedField]?.includes(id)) {
+      triggerMessage(`Item bloqueado! Este item requer nível ${reqLevel}.`, 'error');
+      return;
+    }
+
     updateStats((prev) => ({
       ...prev,
       avatar: {
@@ -47,6 +58,13 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
   };
 
   const buyCosmetic = (category: 'skin' | 'accessory' | 'aura', id: string, name: string, price: number) => {
+    const levels = category === 'skin' ? SKIN_LEVELS : category === 'accessory' ? ACCESSORY_LEVELS : AURA_LEVELS;
+    const reqLevel = levels[id] ?? 1;
+    if (playerLevel < reqLevel) {
+      triggerMessage(`Bloqueado! Adquirir este cosmético requer nível ${reqLevel}.`, 'error');
+      return;
+    }
+
     if (stats.coins < price) {
       playSound.click();
       triggerMessage(`Moedas insuficientes! Você precisa de mais ${price - stats.coins} moedas.`, 'error');
@@ -207,6 +225,8 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               SKINS.map((item) => {
                 const isUnlocked = stats.unlockedSkins.includes(item.id) || item.price === 0;
                 const isEquipped = stats.avatar.skin === item.id;
+                const reqLevel = SKIN_LEVELS[item.id] ?? 1;
+                const isLevelLocked = playerLevel < reqLevel;
 
                 return (
                   <div
@@ -222,7 +242,14 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                         {item.emoji}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">{item.name}</h4>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {item.name}
+                          {reqLevel > 1 && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 font-mono">
+                              Lvl {reqLevel}
+                            </span>
+                          )}
+                        </h4>
                         <p className="text-xs text-slate-400">{item.desc}</p>
                       </div>
                     </div>
@@ -231,6 +258,10 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                       {isEquipped ? (
                         <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
                           <Check className="w-3.5 h-3.5" /> Equipado
+                        </span>
+                      ) : isLevelLocked && !isUnlocked ? (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-405 bg-red-950/40 px-2.5 py-1.5 rounded-xl border border-red-900/40 font-mono">
+                          🔒 Nível {reqLevel}
                         </span>
                       ) : isUnlocked ? (
                         <button
@@ -256,6 +287,8 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               ACCESSORIES.map((item) => {
                 const isUnlocked = stats.unlockedAccessories.includes(item.id) || item.price === 0;
                 const isEquipped = stats.avatar.accessory === item.id;
+                const reqLevel = ACCESSORY_LEVELS[item.id] ?? 1;
+                const isLevelLocked = playerLevel < reqLevel;
 
                 return (
                   <div
@@ -271,7 +304,14 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                         {item.emoji}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">{item.name}</h4>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {item.name}
+                          {reqLevel > 1 && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 font-mono">
+                              Lvl {reqLevel}
+                            </span>
+                          )}
+                        </h4>
                         <p className="text-xs text-slate-400">{item.desc}</p>
                       </div>
                     </div>
@@ -280,6 +320,10 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                       {isEquipped ? (
                         <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
                           <Check className="w-3.5 h-3.5" /> Equipado
+                        </span>
+                      ) : isLevelLocked && !isUnlocked ? (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-405 bg-red-950/40 px-2.5 py-1.5 rounded-xl border border-red-900/40 font-mono">
+                          🔒 Nível {reqLevel}
                         </span>
                       ) : isUnlocked ? (
                         <button
@@ -305,6 +349,8 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               AURAS.map((item) => {
                 const isUnlocked = stats.unlockedAuras.includes(item.id) || item.price === 0;
                 const isEquipped = stats.avatar.aura === item.id;
+                const reqLevel = AURA_LEVELS[item.id] ?? 1;
+                const isLevelLocked = playerLevel < reqLevel;
 
                 return (
                   <div
@@ -323,7 +369,14 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                         <span className="relative z-10 text-slate-500">✨</span>
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">{item.name}</h4>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {item.name}
+                          {reqLevel > 1 && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 font-mono">
+                              Lvl {reqLevel}
+                            </span>
+                          )}
+                        </h4>
                         <p className="text-xs text-slate-400">{item.desc}</p>
                       </div>
                     </div>
@@ -332,6 +385,10 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                       {isEquipped ? (
                         <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
                           <Check className="w-3.5 h-3.5" /> Equipado
+                        </span>
+                      ) : isLevelLocked && !isUnlocked ? (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-405 bg-red-950/40 px-2.5 py-1.5 rounded-xl border border-red-900/40 font-mono">
+                          🔒 Nível {reqLevel}
                         </span>
                       ) : isUnlocked ? (
                         <button

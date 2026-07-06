@@ -4,7 +4,7 @@ import { SKINS, ACCESSORIES, AURAS } from '../data/shopItems';
 
 interface AvatarRendererProps {
   config: AvatarConfig;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   animate?: boolean;
 }
 
@@ -19,6 +19,12 @@ export const AvatarRenderer: React.FC<AvatarRendererProps> = ({
 
   // Sizing definitions
   const sizeClasses = {
+    xs: {
+      container: 'w-8 h-8',
+      skinSize: 'w-6 h-6 text-xs border',
+      accessorySize: 'text-[10px] -top-1.5',
+      auraOffset: 'inset-0'
+    },
     sm: {
       container: 'w-10 h-10',
       skinSize: 'w-8 h-8 text-lg border-2',
@@ -43,7 +49,12 @@ export const AvatarRenderer: React.FC<AvatarRendererProps> = ({
       accessorySize: 'text-6xl -top-8',
       auraOffset: 'inset-3'
     }
-  }[size];
+  }[size] || {
+    container: 'w-20 h-20',
+    skinSize: 'w-16 h-16 text-3xl border-3',
+    accessorySize: 'text-2xl -top-4',
+    auraOffset: 'inset-1'
+  };
 
   return (
     <div className={`relative flex items-center justify-center ${sizeClasses.container} select-none`}>
