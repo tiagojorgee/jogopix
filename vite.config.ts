@@ -6,6 +6,11 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    define: {
+      'process.env.FACEBOOK_APP_ID': JSON.stringify(process.env.FACEBOOK_APP_ID || ''),
+      'process.env.TIKTOK_CLIENT_KEY': JSON.stringify(process.env.TIKTOK_CLIENT_KEY || ''),
+      'process.env.MERCADO_PAGO_ACCESS_TOKEN': JSON.stringify(process.env.MERCADO_PAGO_ACCESS_TOKEN || ''),
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

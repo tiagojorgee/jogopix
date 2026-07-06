@@ -4,6 +4,7 @@ import { GameRunner } from './GameRunner';
 import { RouletteGame } from './RouletteGame';
 import { TigerGame } from './TigerGame';
 import { AviatorGame } from './AviatorGame';
+import { FootballBets } from './FootballBets';
 import { playSound } from '../utils/audio';
 import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle, Star, Sparkles, Flame, Plane } from 'lucide-react';
 import { AdBanner } from './AdBanner';
@@ -17,6 +18,10 @@ interface GamePortalProps {
   openCheckoutForQuickBuy: (itemId: string) => void;
   loggedInUser: AppUser | null;
   onOpenAuthModal: () => void;
+  realBalance: number;
+  setRealBalance: React.Dispatch<React.SetStateAction<number>>;
+  withdrawLimit: number;
+  setWithdrawLimit: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export const GamePortal: React.FC<GamePortalProps> = ({
@@ -26,7 +31,11 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   openShop,
   openCheckoutForQuickBuy,
   loggedInUser,
-  onOpenAuthModal
+  onOpenAuthModal,
+  realBalance,
+  setRealBalance,
+  withdrawLimit,
+  setWithdrawLimit
 }) => {
   const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator' | null>(null);
 
@@ -166,6 +175,17 @@ export const GamePortal: React.FC<GamePortalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real-time Football World Cup & Copa do Brasil Live Score and Betting Board */}
+      <FootballBets
+        stats={stats}
+        updateStats={updateStats}
+        addLog={addLog}
+        realBalance={realBalance}
+        setRealBalance={setRealBalance}
+        withdrawLimit={withdrawLimit}
+        setWithdrawLimit={setWithdrawLimit}
+      />
 
       {/* Bento Grid: Game cards list */}
       <div className="space-y-4">

@@ -61,6 +61,22 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
     return localStorage.getItem('gamezone_mp_access_token') || '';
   });
 
+  // Facebook Authentication configuration states
+  const [fbEnabled, setFbEnabled] = useState<boolean>(() => {
+    return (process.env.FACEBOOK_APP_ID ? true : localStorage.getItem('gamezone_fb_enabled') === 'true');
+  });
+  const [fbAppId, setFbAppId] = useState<string>(() => {
+    return process.env.FACEBOOK_APP_ID || localStorage.getItem('gamezone_fb_app_id') || '';
+  });
+
+  // TikTok Authentication configuration states
+  const [tiktokEnabled, setTiktokEnabled] = useState<boolean>(() => {
+    return (process.env.TIKTOK_CLIENT_KEY ? true : localStorage.getItem('gamezone_tiktok_enabled') === 'true');
+  });
+  const [tiktokClientKey, setTiktokClientKey] = useState<string>(() => {
+    return process.env.TIKTOK_CLIENT_KEY || localStorage.getItem('gamezone_tiktok_client_key') || '';
+  });
+
   // User input states for withdrawal
   const [userPixKey, setUserPixKey] = useState<string>('');
   const [userKeyType, setUserKeyType] = useState<string>('CPF');
@@ -86,7 +102,11 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
     localStorage.setItem('gamezone_op_key_type', opKeyType);
     localStorage.setItem('gamezone_mp_enabled', String(mpEnabled));
     localStorage.setItem('gamezone_mp_access_token', mpAccessToken);
-  }, [opPixKey, opName, opBank, opKeyType, mpEnabled, mpAccessToken]);
+    localStorage.setItem('gamezone_fb_enabled', String(fbEnabled));
+    localStorage.setItem('gamezone_fb_app_id', fbAppId);
+    localStorage.setItem('gamezone_tiktok_enabled', String(tiktokEnabled));
+    localStorage.setItem('gamezone_tiktok_client_key', tiktokClientKey);
+  }, [opPixKey, opName, opBank, opKeyType, mpEnabled, mpAccessToken, fbEnabled, fbAppId, tiktokEnabled, tiktokClientKey]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -522,6 +542,120 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* Social Login APIs configuration section */}
+                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 space-y-3 mb-2">
+                  <span className="block text-[9px] font-mono text-amber-400 font-black uppercase tracking-wider">🔑 APIs de Login Social (Produção)</span>
+                  
+                  {/* Google Login Info */}
+                  <div className="p-2 bg-slate-900/50 rounded-lg border border-slate-850/50 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-slate-300 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                        Login com Google (Firebase Auth)
+                      </span>
+                    </div>
+                    <p className="text-[8px] text-slate-400 leading-normal">
+                      O login do Google já está ativo via Firebase. Para funcionar em produção, você só precisa acessar seu <strong>Console Firebase &gt; Autenticação &gt; Configurações &gt; Domínios Autorizados</strong> e incluir o seu domínio de produção atual.
+                    </p>
+                  </div>
+
+                  {/* Facebook Login Config */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-slate-300 font-bold flex items-center gap-1.5">
+                        Login com Facebook (OAuth Real)
+                        {process.env.FACEBOOK_APP_ID && (
+                          <span className="text-[7px] font-mono px-1 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-sm uppercase tracking-wider font-extrabold">Active .env</span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!!process.env.FACEBOOK_APP_ID}
+                        onClick={() => { setFbEnabled(!fbEnabled); playSound.click(); }}
+                        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          fbEnabled ? 'bg-indigo-600' : 'bg-slate-800'
+                        } ${process.env.FACEBOOK_APP_ID ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            fbEnabled ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    {fbEnabled && (
+                      <div className="space-y-1.5 pl-2 border-l-2 border-indigo-500/30 animate-fadeIn">
+                        <label className="block text-[8px] font-mono text-slate-400 uppercase">Facebook App ID (ID do Aplicativo)</label>
+                        <input
+                          type="text"
+                          value={fbAppId}
+                          disabled={!!process.env.FACEBOOK_APP_ID}
+                          onChange={(e) => setFbAppId(e.target.value)}
+                          placeholder="Ex: 843920194829103"
+                          className={`w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white font-mono ${
+                            process.env.FACEBOOK_APP_ID ? 'opacity-50 cursor-not-allowed text-slate-400' : ''
+                          }`}
+                        />
+                        <span className="text-[8px] text-slate-500 block">
+                          {process.env.FACEBOOK_APP_ID ? (
+                            "Configurado globalmente pelas variáveis de ambiente do projeto."
+                          ) : (
+                            <>Crie um app em <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-indigo-400 underline">Facebook Developers</a> e configure a URL de redirecionamento para este domínio.</>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TikTok Login Config */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-slate-300 font-bold flex items-center gap-1.5">
+                        Login com TikTok (OAuth Real)
+                        {process.env.TIKTOK_CLIENT_KEY && (
+                          <span className="text-[7px] font-mono px-1 py-0.5 bg-[#fe2c55]/10 border border-[#fe2c55]/30 text-[#fe2c55] rounded-sm uppercase tracking-wider font-extrabold">Active .env</span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!!process.env.TIKTOK_CLIENT_KEY}
+                        onClick={() => { setTiktokEnabled(!tiktokEnabled); playSound.click(); }}
+                        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          tiktokEnabled ? 'bg-[#fe2c55]' : 'bg-slate-800'
+                        } ${process.env.TIKTOK_CLIENT_KEY ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            tiktokEnabled ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    {tiktokEnabled && (
+                      <div className="space-y-1.5 pl-2 border-l-2 border-[#fe2c55]/30 animate-fadeIn">
+                        <label className="block text-[8px] font-mono text-slate-400 uppercase">TikTok Client Key</label>
+                        <input
+                          type="text"
+                          value={tiktokClientKey}
+                          disabled={!!process.env.TIKTOK_CLIENT_KEY}
+                          onChange={(e) => setTiktokClientKey(e.target.value)}
+                          placeholder="Ex: aw89q7a89s67a..."
+                          className={`w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white font-mono ${
+                            process.env.TIKTOK_CLIENT_KEY ? 'opacity-50 cursor-not-allowed text-slate-400' : ''
+                          }`}
+                        />
+                        <span className="text-[8px] text-slate-500 block">
+                          {process.env.TIKTOK_CLIENT_KEY ? (
+                            "Configurado globalmente pelas variáveis de ambiente do projeto."
+                          ) : (
+                            <>Obtenha em <a href="https://developers.tiktok.com" target="_blank" rel="noreferrer" className="text-pink-400 underline">TikTok Developer Platform</a> habilitando o "Login Kit" para web.</>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div>
                   <label className="block text-[9px] font-mono text-slate-500 uppercase mb-1">Tipo de Chave Pix (Backup Manual)</label>

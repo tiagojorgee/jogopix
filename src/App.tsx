@@ -381,6 +381,10 @@ export default function App() {
             openCheckoutForQuickBuy={openCheckoutForQuickBuy}
             loggedInUser={loggedInUser}
             onOpenAuthModal={() => setShowAuthModal(true)}
+            realBalance={realBalance}
+            setRealBalance={setRealBalance}
+            withdrawLimit={withdrawLimit}
+            setWithdrawLimit={setWithdrawLimit}
           />
         )}
 

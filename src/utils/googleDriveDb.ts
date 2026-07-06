@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { PlayerStats, TransactionLog } from '../types';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -12,6 +12,11 @@ const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/drive.file');
 provider.addScope('https://www.googleapis.com/auth/userinfo.email');
 provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+
+// Configure Facebook Auth Provider
+const fbProvider = new FacebookAuthProvider();
+fbProvider.addScope('email');
+fbProvider.addScope('public_profile');
 
 export interface GameZoneDatabase {
   stats: PlayerStats;
@@ -72,6 +77,19 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     throw error;
   } finally {
     isSigningIn = false;
+  }
+};
+
+// Facebook Sign-in function
+export const facebookSignIn = async (): Promise<{ user: User } | null> => {
+  try {
+    const result = await signInWithPopup(auth, fbProvider);
+    cachedUser = result.user;
+    notifyListeners();
+    return { user: result.user };
+  } catch (error: any) {
+    console.error('Erro de Login Facebook:', error);
+    throw error;
   }
 };
 
