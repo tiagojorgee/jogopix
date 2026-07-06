@@ -308,10 +308,10 @@ export default function App() {
     triggerToast(`Sucesso! Seu ${item.name} foi creditado com segurança e seu limite de saque aumentou em R$ ${limitIncrement.toFixed(2)}.`);
   };
 
-  const triggerToast = (msg: string) => {
+  function triggerToast(msg: string) {
     setAppToast(msg);
     setTimeout(() => setAppToast(null), 4000);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
@@ -432,15 +432,15 @@ export default function App() {
       )}
 
       {/* User Authentication Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={(user) => {
-          setLoggedInUser(user);
-          setShowAuthModal(false);
-          triggerToast(`👋 Bem-vindo de volta, ${user.name}!`);
-        }}
-      />
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={(user) => {
+            setLoggedInUser(user);
+          }}
+          triggerToast={triggerToast}
+        />
+      )}
 
       {/* Global persistent Footer */}
       <footer className="bg-slate-900 border-t border-slate-800/80 py-5 text-center text-xs text-slate-500 mt-auto font-mono">

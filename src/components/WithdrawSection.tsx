@@ -53,6 +53,14 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
     return localStorage.getItem('gamezone_op_key_type') || 'E-mail';
   });
 
+  // Mercado Pago automatic receiver credentials
+  const [mpEnabled, setMpEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('gamezone_mp_enabled') === 'true';
+  });
+  const [mpAccessToken, setMpAccessToken] = useState<string>(() => {
+    return localStorage.getItem('gamezone_mp_access_token') || '';
+  });
+
   // User input states for withdrawal
   const [userPixKey, setUserPixKey] = useState<string>('');
   const [userKeyType, setUserKeyType] = useState<string>('CPF');
@@ -76,7 +84,9 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
     localStorage.setItem('gamezone_op_name', opName);
     localStorage.setItem('gamezone_op_bank', opBank);
     localStorage.setItem('gamezone_op_key_type', opKeyType);
-  }, [opPixKey, opName, opBank, opKeyType]);
+    localStorage.setItem('gamezone_mp_enabled', String(mpEnabled));
+    localStorage.setItem('gamezone_mp_access_token', mpAccessToken);
+  }, [opPixKey, opName, opBank, opKeyType, mpEnabled, mpAccessToken]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -471,8 +481,50 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
 
             {isConfiguring ? (
               <form onSubmit={handleSaveOpAccount} className="space-y-3 pt-2">
+                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 space-y-2 mb-2">
+                  <span className="block text-[10px] font-mono text-amber-400 font-black uppercase tracking-wider">⚡ Mecanismo de Pagamento</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-slate-300 font-bold">Mercado Pago Automatizado</span>
+                    <button
+                      type="button"
+                      onClick={() => { setMpEnabled(!mpEnabled); playSound.click(); }}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        mpEnabled ? 'bg-emerald-600' : 'bg-slate-800'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          mpEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-slate-500 leading-tight">
+                    Quando ativo, as compras de moedas e VIP na loja gerarão códigos Pix reais integrados ao Mercado Pago para recebimento instantâneo direto em sua conta Mercado Pago.
+                  </p>
+                </div>
+
+                {mpEnabled && (
+                  <div className="space-y-2.5 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800 animate-fadeIn">
+                    <div>
+                      <label className="block text-[9px] font-mono text-slate-400 uppercase mb-0.5">Access Token do Mercado Pago</label>
+                      <input
+                        type="password"
+                        required={mpEnabled}
+                        value={mpAccessToken}
+                        onChange={(e) => setMpAccessToken(e.target.value)}
+                        placeholder="APP_USR-..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono"
+                      />
+                      <span className="text-[8px] text-slate-500 block mt-0.5">
+                        Insira sua credencial "Production Access Token" obtida em <a href="https://developers.mercadopago.com" target="_blank" rel="noreferrer" className="text-indigo-400 underline">Mercado Pago Developers</a>.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-[9px] font-mono text-slate-500 uppercase mb-1">Tipo de Chave Pix</label>
+                  <label className="block text-[9px] font-mono text-slate-500 uppercase mb-1">Tipo de Chave Pix (Backup Manual)</label>
                   <select
                     value={opKeyType}
                     onChange={(e) => setOpKeyType(e.target.value)}
@@ -531,28 +583,49 @@ export const WithdrawSection: React.FC<WithdrawSectionProps> = ({
                   <div className="p-1 bg-amber-500/10 rounded border border-amber-500/20 text-xs">🏦</div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Canal Oficial Ativo</h4>
-                    <p className="text-[9px] text-slate-500">Liquidando em tempo real</p>
+                    <p className="text-[9px] text-slate-500">
+                      {mpEnabled ? '🔥 Mercado Pago Automático' : '🔒 Pix Manual com Verificação'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-[11px] font-mono">
-                  <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Chave Pix ({opKeyType}):</span>
-                    <strong className="text-slate-200 select-all">{opPixKey}</strong>
+                {mpEnabled ? (
+                  <div className="space-y-2 p-2 bg-emerald-950/30 border border-emerald-500/20 text-emerald-300 rounded-xl text-[11px] leading-relaxed">
+                    <div className="font-bold flex items-center gap-1.5 text-[11px]">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Integração Mercado Pago Ativa</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      Os pagamentos da loja gerarão cobranças reais de Pix com verificação e liberação 100% automatizada.
+                    </p>
+                    <div className="font-mono text-[9px] text-slate-500 truncate mt-1">
+                      Token: APP_USR-{mpAccessToken ? '***' + mpAccessToken.slice(-6) : 'NÃO CONFIGURADO'}
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Beneficiário:</span>
-                    <strong className="text-slate-200 uppercase">{opName}</strong>
+                ) : (
+                  <div className="space-y-2 text-[11px] font-mono">
+                    <div>
+                      <span className="text-slate-500 block text-[9px] uppercase">Chave Pix ({opKeyType}):</span>
+                      <strong className="text-slate-200 select-all">{opPixKey}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[9px] uppercase">Beneficiário:</span>
+                      <strong className="text-slate-200 uppercase">{opName}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[9px] uppercase">Instituição Bancária:</span>
+                      <strong className="text-slate-200">{opBank}</strong>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Instituição Bancária:</span>
-                    <strong className="text-slate-200">{opBank}</strong>
-                  </div>
-                </div>
+                )}
 
                 <div className="bg-amber-950/20 border border-amber-500/10 rounded-lg p-2 text-[10px] text-amber-200 leading-relaxed flex gap-1 items-start">
                   <span className="text-[12px] mt-0.5">💡</span>
-                  <span>Os QR Codes gerados nas compras da Loja apontarão para esta chave Pix, simulando recebimento real!</span>
+                  <span>
+                    {mpEnabled 
+                      ? 'Recomendamos manter o token ativo para receber pagamentos de usuários reais automaticamente.' 
+                      : 'Os QR Codes gerados nas compras apontarão para sua chave Pix de backup com upload manual de comprovante.'}
+                  </span>
                 </div>
               </div>
             )}
