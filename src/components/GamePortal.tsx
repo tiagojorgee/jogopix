@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { PlayerStats, ShopItem } from '../types';
 import { GameRunner } from './GameRunner';
-import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle } from 'lucide-react';
+import { RouletteGame } from './RouletteGame';
+import { TigerGame } from './TigerGame';
+import { AviatorGame } from './AviatorGame';
+import { playSound } from '../utils/audio';
+import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle, Star, Sparkles, Flame, Plane } from 'lucide-react';
+import { AdBanner } from './AdBanner';
 
 interface GamePortalProps {
   stats: PlayerStats;
@@ -18,10 +23,76 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   openShop,
   openCheckoutForQuickBuy
 }) => {
-  const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | null>(null);
+  const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator' | null>(null);
 
   // Helper to count active stage skips owned by counting 'booster_stage_skip' in stats.unlockedAccessories
   const stageSkipsOwned = stats.unlockedAccessories.filter(x => x === 'booster_stage_skip').length;
+
+  if (activeGame === 'roulette') {
+    return (
+      <div className="p-4 md:p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-black text-white">🎡 Roleta da Sorte</h2>
+          <button
+            onClick={() => setActiveGame(null)}
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
+          >
+            Voltar ao Lobby
+          </button>
+        </div>
+        <RouletteGame
+          stats={stats}
+          updateStats={updateStats}
+          addLog={addLog}
+          onExit={() => setActiveGame(null)}
+        />
+      </div>
+    );
+  }
+
+  if (activeGame === 'tiger') {
+    return (
+      <div className="p-4 md:p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-black text-white">🐯 Fortune Tiger VIP</h2>
+          <button
+            onClick={() => setActiveGame(null)}
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
+          >
+            Voltar ao Lobby
+          </button>
+        </div>
+        <TigerGame
+          stats={stats}
+          updateStats={updateStats}
+          addLog={addLog}
+          onExit={() => setActiveGame(null)}
+        />
+      </div>
+    );
+  }
+
+  if (activeGame === 'aviator') {
+    return (
+      <div className="p-4 md:p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-black text-white">✈️ Aviator Crash</h2>
+          <button
+            onClick={() => setActiveGame(null)}
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
+          >
+            Voltar ao Lobby
+          </button>
+        </div>
+        <AviatorGame
+          stats={stats}
+          updateStats={updateStats}
+          addLog={addLog}
+          onExit={() => setActiveGame(null)}
+        />
+      </div>
+    );
+  }
 
   if (activeGame) {
     return (
@@ -159,8 +230,125 @@ export const GamePortal: React.FC<GamePortalProps> = ({
             </div>
           </div>
 
+          {/* Card 4: Cyber Roulette da Sorte */}
+          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-cyan-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+            <div className="p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/20 group-hover:bg-cyan-500/20 transition-colors">
+                  <Star className="w-6 h-6 text-cyan-400" />
+                </div>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-800/35">
+                  Giro: Equiprovável
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-extrabold text-white group-hover:text-cyan-400 transition-colors">
+                  Roleta Cyber da Sorte
+                </h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  A roleta da sorte está de volta com prêmios de alta conversão! Gire a roleta de 8 quadrantes por apenas 30 moedas e fature prêmios incríveis como 500 moedas extras, vidas extras e stage skips de fase!
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+              <div className="text-[10px] text-slate-500 font-mono">
+                Custo de jogo: <strong className="text-cyan-400">🪙 30 Moedas</strong>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveGame('roulette');
+                  playSound.click();
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/20 transition-all cursor-pointer"
+                id="btn-play-roulette"
+              >
+                <PlayCircle className="w-4 h-4" /> Girar Roleta
+              </button>
+            </div>
+          </div>
+
+          {/* Card 5: Fortune Tiger */}
+          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-amber-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+            <div className="p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors">
+                  <Flame className="w-6 h-6 text-amber-500" />
+                </div>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-amber-300 bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-800/35">
+                  Multiplicador: Até 20x
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                  Fortune Tiger VIP 🐯
+                </h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  O queridinho do Brasil chegou! Gire a pata de ouro do tigre, alinhe envelopes da sorte, sacos de ouro e fogos de artifício na grade 3x3 e fature multiplicadores explosivos no caça-níquel mais famoso das redes!
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+              <div className="text-[10px] text-slate-500 font-mono">
+                Custo de jogo: <strong className="text-amber-400">Moedas (Sua Aposta)</strong>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveGame('tiger');
+                  playSound.click();
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-600/25 transition-all cursor-pointer"
+                id="btn-play-tiger"
+              >
+                <PlayCircle className="w-4 h-4 text-slate-950" /> Soltar o Tigre
+              </button>
+            </div>
+          </div>
+
+          {/* Card 6: Aviator Crash */}
+          <div className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-rose-500/40 hover:-translate-y-1 duration-300 flex flex-col justify-between">
+            <div className="p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 group-hover:bg-rose-500/20 transition-colors">
+                  <Plane className="w-6 h-6 text-rose-500" />
+                </div>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-rose-300 bg-rose-950/40 px-2.5 py-1 rounded-full border border-rose-800/35">
+                  Decolagem: Multiplicador Vivo
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-extrabold text-white group-hover:text-rose-400 transition-colors">
+                  Aviator Crash ✈️
+                </h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Decole o aviãozinho da sorte e assista o multiplicador subir rapidamente em tempo real! Retire seu investimento com lucro em moedas antes que o motor entre em pane e ele decole para longe do radar.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-950/40 border-t border-slate-850 flex items-center justify-between">
+              <div className="text-[10px] text-slate-500 font-mono">
+                Custo de jogo: <strong className="text-rose-400">Moedas (Sua Aposta)</strong>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveGame('aviator');
+                  playSound.click();
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer"
+                id="btn-play-aviator"
+              >
+                <PlayCircle className="w-4 h-4 text-slate-950" /> Decolar Saldo
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* Persistent Ad Monetization Banner */}
+      <AdBanner position="bottom" />
 
       {/* Guide Footer Info: Lives, Stage skips, etc */}
       <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-5 space-y-4">

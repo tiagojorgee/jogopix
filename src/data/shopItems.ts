@@ -114,12 +114,34 @@ export const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'vip_all_access',
     name: 'VIP All-Access Pass',
-    description: 'Desbloqueie absolutamente TODOS os avatares, acessórios e auras da loja instantaneamente, e ganhe 10 vidas de bônus.',
+    description: 'Ativa o status de membro VIP PREMIUM: Desbloqueia todos os avatares/auras, dá 10 vidas, aumenta o RTP base em 50% e dobra seus limites!',
     price: 29.90,
     currency: 'real',
     category: 'booster',
     subCategory: 'pack',
     visualValue: '👑 VIP',
     value: 10
+  },
+  {
+    id: 'booster_luck_15',
+    name: 'Multiplicador de Sorte (15 Giros)',
+    description: 'Aumenta em 200% as chances de acerto e liberação de jackpots no Fortune Tiger, Aviator e Roleta pelas próximas 15 rodadas!',
+    price: 14.90,
+    currency: 'real',
+    category: 'booster',
+    subCategory: 'pack',
+    visualValue: '🍀 x15',
+    value: 15
+  },
+  {
+    id: 'limit_upgrade_500',
+    name: 'Upgrade de Limite de Saque (+R$ 500,00)',
+    description: 'Aumenta instantaneamente o seu limite de saque em R$ 500,00 adicionais para retirar grandes prêmios imediatamente sem travas.',
+    price: 25.00,
+    currency: 'real',
+    category: 'booster',
+    subCategory: 'pack',
+    visualValue: '📈 R$ 500',
+    value: 500
   }
 ];

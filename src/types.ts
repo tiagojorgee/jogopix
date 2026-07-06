@@ -28,6 +28,8 @@ export interface PlayerStats {
   unlockedAccessories: string[];
   unlockedAuras: string[];
   avatar: AvatarConfig;
+  isVip?: boolean;
+  rtpBoostSpins?: number;
 }
 
 export interface TransactionLog {

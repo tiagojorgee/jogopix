@@ -163,5 +163,84 @@ export const playSound = {
     osc2.start();
     osc1.stop(ctx.currentTime + 0.18);
     osc2.stop(ctx.currentTime + 0.18);
+  },
+
+  spin: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(380, ctx.currentTime + 0.15);
+
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, ctx.currentTime);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+  },
+
+  tick: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.03);
+
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.03);
+  },
+
+  jackpot: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const playTone = (freq: number, start: number, duration: number, type: OscillatorType = 'triangle') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+
+      gain.gain.setValueAtTime(0.0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + duration);
+    };
+
+    // Arpeggio C major -> E major -> G major -> C6
+    const delay = 0.08;
+    playTone(523.25, 0, 0.2); // C5
+    playTone(659.25, delay, 0.2); // E5
+    playTone(783.99, delay * 2, 0.2); // G5
+    playTone(1046.50, delay * 3, 0.35); // C6
+    playTone(1318.51, delay * 4, 0.35); // E6
+    playTone(1567.98, delay * 5, 0.5); // G6
   }
 };

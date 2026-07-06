@@ -1,23 +1,25 @@
 import React from 'react';
 import { PlayerStats } from '../types';
 import { AvatarRenderer } from './AvatarRenderer';
-import { Shield, Sparkles, Heart, Trophy, ShoppingBag, Coins, Swords, History } from 'lucide-react';
+import { Shield, Sparkles, Heart, Trophy, ShoppingBag, Coins, Swords, History, Wallet } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
 interface HeaderProps {
   stats: PlayerStats;
-  activeTab: 'games' | 'avatar' | 'shop' | 'logs';
-  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs') => void;
+  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque';
+  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque') => void;
   openCheckoutForQuickBuy: (itemId: string) => void;
+  realBalance?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   stats,
   activeTab,
   setActiveTab,
-  openCheckoutForQuickBuy
+  openCheckoutForQuickBuy,
+  realBalance
 }) => {
-  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs') => {
+  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque') => {
     setActiveTab(tab);
     playSound.click();
   };
@@ -42,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
                 GAME<span className="text-indigo-400">ZONE</span>
               </h1>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-indigo-950/60 text-indigo-300 rounded border border-indigo-800/40 font-medium">
-                v2.4
+                v2.5
               </span>
             </div>
             <p className="text-xs text-slate-400">Arcade &amp; Customização Premium</p>
@@ -50,8 +52,50 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Player Stats Panel */}
-        <div className="flex flex-wrap items-center gap-2 md:gap-4 bg-slate-950/60 p-2 rounded-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 bg-slate-950/60 p-2 rounded-xl border border-slate-800">
           
+          {/* SALDO REAL (Simulado) */}
+          {realBalance !== undefined && (
+            <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-950/40 border border-emerald-500/30 rounded-lg shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+              <Wallet className="w-4 h-4 text-emerald-450" />
+              <div className="text-left">
+                <div className="text-[9px] text-emerald-300 leading-none font-bold uppercase tracking-wider">Saldo Sacável</div>
+                <div className="text-sm font-bold text-emerald-400 font-mono leading-tight">R$ {realBalance.toFixed(2)}</div>
+              </div>
+              <button
+                onClick={() => handleTabClick('saque')}
+                className="ml-1 text-[10px] px-1.5 py-0.5 bg-emerald-650 hover:bg-emerald-600 text-white font-bold rounded cursor-pointer transition-colors"
+                id="btn-nav-saque"
+              >
+                Sacar
+              </button>
+            </div>
+          )}
+
+          {/* VIP BADGE */}
+          {stats.isVip ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/50 rounded-lg animate-pulse">
+              <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span className="text-xs font-black text-amber-300 font-mono tracking-tight">VIP PREMIUM</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleQuickBuyClick('vip_all_access')}
+              className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-slate-900 to-indigo-950 hover:to-indigo-900 border border-indigo-500/30 text-indigo-300 hover:text-white rounded-lg text-xs font-bold cursor-pointer transition-all hover:scale-105"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Adquirir VIP</span>
+            </button>
+          )}
+
+          {/* LUCKY BOOST SPINS */}
+          {stats.rtpBoostSpins !== undefined && stats.rtpBoostSpins > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-cyan-950/40 border border-cyan-500/30 rounded-lg text-cyan-300 font-mono text-xs">
+              <span className="animate-pulse">🍀 Sorte +200%:</span>
+              <span className="font-bold text-cyan-400">{stats.rtpBoostSpins} Giros</span>
+            </div>
+          )}
+
           {/* LIVES */}
           <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-900 rounded-lg border border-slate-800">
             <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
@@ -160,6 +204,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <History className="w-4 h-4" />
           Extrato Seguro
+        </button>
+        <button
+          onClick={() => handleTabClick('saque')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold tracking-tight transition-all cursor-pointer ${
+            activeTab === 'saque'
+              ? 'bg-indigo-600 text-white border border-indigo-500/40 shadow-lg shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
+          }`}
+          id="tab-saque"
+        >
+          <Wallet className="w-4 h-4" />
+          Saque &amp; Caixa
         </button>
       </div>
     </header>

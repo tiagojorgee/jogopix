@@ -202,7 +202,17 @@ export const Shop: React.FC<ShopProps> = ({
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-bold border-2 mb-3 bg-slate-950 shadow-inner ${
                   isVip ? 'border-indigo-500/30' : 'border-slate-800'
                 }`}>
-                  {item.id.includes('lives') ? '❤️' : item.id.includes('skip') ? '⏩' : item.id.includes('coin') ? '🪙' : '👑'}
+                  {item.id.includes('lives') 
+                    ? '❤️' 
+                    : item.id.includes('skip') 
+                    ? '⏩' 
+                    : item.id.includes('coin') 
+                    ? '🪙' 
+                    : item.id.includes('luck') 
+                    ? '🍀' 
+                    : item.id.includes('limit') 
+                    ? '📈' 
+                    : '👑'}
                 </div>
 
                 <div className="flex items-center gap-2">

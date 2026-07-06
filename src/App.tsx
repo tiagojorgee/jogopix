@@ -6,13 +6,14 @@ import { AvatarCustomizer } from './components/AvatarCustomizer';
 import { Shop } from './components/Shop';
 import { TransactionLogs } from './components/TransactionLogs';
 import { CheckoutModal } from './components/CheckoutModal';
+import { WithdrawSection } from './components/WithdrawSection';
 import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
 
 export default function App() {
-  // Tabs: 'games' | 'avatar' | 'shop' | 'logs'
-  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs'>('games');
+  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque'
+  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque'>('games');
   
   // Checkout triggers
   const [checkoutItem, setCheckoutItem] = useState<ShopItem | null>(null);
@@ -45,6 +46,26 @@ export default function App() {
       }
     };
   });
+
+  // Lifted financial states for synchronization and monetization headers
+  const [realBalance, setRealBalance] = useState<number>(() => {
+    const cached = localStorage.getItem('gamezone_real_balance');
+    return cached ? parseFloat(cached) : 120.00; // default initial simulated balance of R$ 120
+  });
+
+  const [withdrawLimit, setWithdrawLimit] = useState<number>(() => {
+    const cached = localStorage.getItem('gamezone_withdraw_limit');
+    return cached ? parseFloat(cached) : 100.00; // default initial withdrawal limit
+  });
+
+  // Synchronize financial localStorage
+  useEffect(() => {
+    localStorage.setItem('gamezone_real_balance', realBalance.toFixed(2));
+  }, [realBalance]);
+
+  useEffect(() => {
+    localStorage.setItem('gamezone_withdraw_limit', withdrawLimit.toFixed(2));
+  }, [withdrawLimit]);
 
   const [logs, setLogs] = useState<TransactionLog[]>(() => {
     const cached = localStorage.getItem('gamezone_transaction_logs');
@@ -121,6 +142,8 @@ export default function App() {
       let nextSkins = [...prev.unlockedSkins];
       let nextAccessories = [...prev.unlockedAccessories];
       let nextAuras = [...prev.unlockedAuras];
+      let nextIsVip = prev.isVip;
+      let nextRtpBoostSpins = prev.rtpBoostSpins || 0;
 
       if (item.subCategory === 'lives') {
         nextLives += item.value;
@@ -136,6 +159,9 @@ export default function App() {
         nextAuras = AURAS.map((au) => au.id);
         // Add 10 bonus lives
         nextLives += 10;
+        nextIsVip = true;
+      } else if (item.id === 'booster_luck_15') {
+        nextRtpBoostSpins += item.value;
       }
 
       return {
@@ -144,7 +170,9 @@ export default function App() {
         coins: nextCoins,
         unlockedSkins: nextSkins,
         unlockedAccessories: nextAccessories,
-        unlockedAuras: nextAuras
+        unlockedAuras: nextAuras,
+        isVip: nextIsVip,
+        rtpBoostSpins: nextRtpBoostSpins
       };
     });
 
@@ -152,9 +180,13 @@ export default function App() {
     const logType = isPack ? 'purchase_coins' : 'purchase_booster';
     addLog(logType, `Compra Segura aprovada: ${item.name}`, item.price, 'real');
 
+    // Increase withdrawal limit on purchase
+    const limitIncrement = item.id === 'limit_upgrade_500' ? item.value : item.price;
+    setWithdrawLimit((prev) => prev + limitIncrement);
+
     playSound.purchase();
     setCheckoutItem(null);
-    triggerToast(`Sucesso! Seu ${item.name} foi creditado com segurança.`);
+    triggerToast(`Sucesso! Seu ${item.name} foi creditado com segurança e seu limite de saque aumentou em R$ ${limitIncrement.toFixed(2)}.`);
   };
 
   const triggerToast = (msg: string) => {
@@ -177,6 +209,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         openCheckoutForQuickBuy={openCheckoutForQuickBuy}
+        realBalance={realBalance}
       />
 
       {/* App-level Toast notifications */}
@@ -228,6 +261,19 @@ export default function App() {
         {activeTab === 'logs' && (
           <TransactionLogs
             logs={logs}
+          />
+        )}
+
+        {activeTab === 'saque' && (
+          <WithdrawSection
+            stats={stats}
+            updateStats={setStats}
+            addLog={addLog}
+            realBalance={realBalance}
+            setRealBalance={setRealBalance}
+            withdrawLimit={withdrawLimit}
+            setWithdrawLimit={setWithdrawLimit}
+            openShop={() => setActiveTab('shop')}
           />
         )}
       </main>
