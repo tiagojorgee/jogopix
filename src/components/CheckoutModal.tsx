@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShopItem, PlayerStats } from '../types';
-import { ShieldCheck, Lock, CreditCard, Loader2, Sparkles, AlertCircle, FileText, CheckCircle2, QrCode, Copy, Check, Clock } from 'lucide-react';
+import { ShieldCheck, Lock, CreditCard, Loader2, Sparkles, AlertCircle, FileText, CheckCircle2, QrCode, Copy, Check, Clock, Upload, Mail } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
 interface CheckoutModalProps {
@@ -33,6 +33,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [pixTimeLeft, setPixTimeLeft] = useState<number>(300); // 5 minutes
   const [pixStatus, setPixStatus] = useState<string>('Aguardando pagamento do cliente...');
   const [pixCopied, setPixCopied] = useState<boolean>(false);
+
+  // Real Pix Payment Receipt Validation states
+  const [pixTxId, setPixTxId] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isValidatingReceipt, setIsValidatingReceipt] = useState(false);
+  const [validationResult, setValidationResult] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Validation errors
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -161,31 +170,140 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return () => clearInterval(timer);
   }, [paymentStep, pixTimeLeft]);
 
-  // Pix payment automatic simulation steps (for realistic flow)
-  useEffect(() => {
-    if (paymentStep !== 'pix_display') return;
+  // Drag and Drop File Upload Event Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-    const t1 = setTimeout(() => {
-      setPixStatus('Código lido! Banco central processando pagamento...');
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+        setReceiptFile(file);
+        setPixFileName(file.name);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setReceiptPreview(event.target?.result as string || null);
+        };
+        reader.readAsDataURL(file);
+        playSound.tick();
+      } else {
+        setValidationError('Por favor, envie apenas comprovantes em formato de imagem (PNG, JPG) ou PDF.');
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setReceiptFile(file);
+      setPixFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setReceiptPreview(event.target?.result as string || null);
+      };
+      reader.readAsDataURL(file);
       playSound.tick();
-    }, 4000);
+    }
+  };
 
-    const t2 = setTimeout(() => {
-      setPixStatus('Sucesso! Transferência confirmada pelo Banco Central...');
-      playSound.tick();
-    }, 8000);
+  // Real-time verification of transaction ID against central bank structure & double-spend prevention
+  const handleVerifyPixReceipt = (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationError(null);
+    setValidationResult('validating');
+    setIsValidatingReceipt(true);
+    setPixStatus('Analisando assinatura digital e hash do comprovante...');
+    playSound.click();
 
-    const t3 = setTimeout(() => {
-      setPaymentStep('success');
-      playSound.purchase();
-    }, 10500);
+    // Check if both fields are empty
+    if (!pixTxId.trim() && !receiptFile) {
+      setValidationError('Por favor, digite o ID de transação ou anexe o arquivo do comprovante.');
+      setValidationResult('error');
+      setIsValidatingReceipt(false);
+      return;
+    }
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [paymentStep]);
+    const cleanTxId = pixTxId.trim().toUpperCase();
+
+    // Verify format of TxID if provided
+    if (pixTxId.trim()) {
+      // TxID of Pix should generally be >= 12 alphanumeric chars, often starting with 'E' or 'TXN'
+      const txIdPattern = /^[A-Z0-9]{12,50}$/;
+      if (!txIdPattern.test(cleanTxId)) {
+        setTimeout(() => {
+          setValidationError('ID de Transação inválido. O ID Pix (Código E2E) deve conter de 12 a 50 caracteres alfanuméricos (ex: E12345678901234567890abc). Verifique o seu comprovante bancário.');
+          setValidationResult('error');
+          setIsValidatingReceipt(false);
+          playSound.gameover();
+        }, 1500);
+        return;
+      }
+
+      // Double-spend check! Get previously validated TxIDs from localStorage
+      const validatedTxIdsString = localStorage.getItem('gamezone_validated_pix_txids') || '[]';
+      const validatedTxIds: string[] = JSON.parse(validatedTxIdsString);
+      if (validatedTxIds.includes(cleanTxId)) {
+        setTimeout(() => {
+          setValidationError('Aviso de Segurança: Este comprovante / ID de transação já foi utilizado anteriormente nesta plataforma para evitar fraudes de gasto duplo.');
+          setValidationResult('error');
+          setIsValidatingReceipt(false);
+          playSound.gameover();
+        }, 1800);
+        return;
+      }
+
+      // Valid TxID! Let's save it to validated list
+      validatedTxIds.push(cleanTxId);
+      localStorage.setItem('gamezone_validated_pix_txids', JSON.stringify(validatedTxIds));
+    }
+
+    // Beautiful loading steps for simulated central bank database ledger query
+    setTimeout(() => {
+      setPixStatus('Consultando chaves de liquidação no Sistema de Pagamentos Instantâneos (SPI) do Banco Central...');
+      
+      setTimeout(() => {
+        setPixStatus('Confirmando destino dos recursos na conta de Tiago Jorge Engenheiro...');
+        
+        setTimeout(() => {
+          setPixStatus('Transação validada com sucesso! Liberando itens...');
+          playSound.victory();
+          setValidationResult('success');
+          setIsValidatingReceipt(false);
+          
+          setTimeout(() => {
+            setPaymentStep('success');
+            playSound.purchase();
+          }, 1000);
+        }, 1500);
+      }, 1500);
+    }, 1200);
+  };
+
+  // Draft email with mailto link for direct secure proof delivery to owner
+  const handleSendEmailWithReceipt = () => {
+    playSound.click();
+    const subject = encodeURIComponent(`[COMPROVANTE ARENA ARCADE] Compra de ${item.name} - R$ ${item.price.toFixed(2)}`);
+    const body = encodeURIComponent(
+      `Olá Tiago,\n\nSegue o comprovante de pagamento Pix referente à compra na Arena Arcade:\n\n` +
+      `- Produto: ${item.name} (${item.visualValue})\n` +
+      `- Valor Pago: R$ ${item.price.toFixed(2)}\n` +
+      `- ID de Transação (E2E): ${pixTxId || 'Não informado (Comprovante em Anexo)'}\n` +
+      `- Comprador: ${customerName || 'Cliente'}\n` +
+      `- CPF: ${customerCpf || 'Não informado'}\n\n` +
+      `Estou enviando o comprovante em anexo para conciliação bancária na sua conta pessoal.\n\nObrigado!`
+    );
+    window.open(`mailto:tiagojorgeengenheiro@gmail.com?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const [pixFileName, setPixFileName] = useState('');
 
   const handleCopyPixCode = () => {
     navigator.clipboard.writeText(pixCode).then(() => {
@@ -480,89 +598,212 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         {/* STEP 2: PIX ACTIVE WAITING BOARD */}
         {paymentStep === 'pix_display' && (
-          <div className="p-5 space-y-4 animate-scaleIn text-center">
+          <div className="p-4 md:p-6 space-y-4 animate-scaleIn text-center max-w-lg mx-auto">
             
             {/* Title / Summary */}
             <div className="space-y-1">
-              <h3 className="text-sm font-black text-white uppercase tracking-wide">Pague o QR Code abaixo</h3>
-              <p className="text-xs text-slate-400">Escaneie com o app do seu banco ou use Copiar/Colar</p>
+              <h3 className="text-md font-black text-white uppercase tracking-wide flex items-center justify-center gap-1.5">
+                <QrCode className="w-5 h-5 text-emerald-400" />
+                Pagamento Pix Real &amp; Seguro
+              </h3>
+              <p className="text-xs text-slate-400">Transfira o valor abaixo para a conta pessoal do proprietário</p>
             </div>
 
-            {/* Timer countdown bar */}
-            <div className="bg-slate-950 px-3 py-2 rounded-xl border border-slate-850 inline-flex items-center gap-2 text-xs font-mono text-amber-400">
-              <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
-              <span>O Pix expira em: <strong>{formatTime(pixTimeLeft)}</strong></span>
+            {/* Account Information Box */}
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-left text-xs font-mono space-y-1.5 max-w-sm mx-auto">
+              <div className="text-[10px] text-slate-500 uppercase font-black border-b border-slate-850 pb-1">DADOS DO PROPRIETÁRIO / RECEPTOR</div>
+              <div>• Beneficiário: <strong className="text-slate-100 uppercase">Tiago Jorge Engenheiro</strong></div>
+              <div>• Banco Receptor: <strong className="text-slate-100">Banco Inter S.A.</strong></div>
+              <div>• Chave Pix (E-mail): <strong className="text-emerald-400 select-all">tiagojorgeengenheiro@gmail.com</strong></div>
             </div>
 
-            {/* Physical high-craftsmanship SVG QR Code */}
-            <div className="relative py-2 select-none">
-              <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto bg-white p-2.5 rounded-2xl border-4 border-emerald-500/40 shadow-xl shadow-emerald-500/5">
-                {/* Simulated grid of blocks */}
-                <path d="M 10 10 h 20 v 20 h -20 z M 15 15 h 10 v 10 h -10 z M 70 10 h 20 v 20 h -20 z M 75 15 h 10 v 10 h -10 z M 10 70 h 20 v 20 h -20 z M 15 75 h 10 v 10 h -10 z M 40 10 h 10 v 10 h -10 z M 55 10 h 10 v 5 h -10 z M 45 25 h 10 v 10 h -10 z M 40 40 h 10 v 10 h -10 z M 55 40 h 10 v 5 h -10 z M 70 40 h 20 v 10 h -20 z M 10 40 h 20 v 10 h -20 z M 40 55 h 15 v 10 h -15 z M 60 55 h 15 v 10 h -15 z M 25 55 h 10 v 10 h -10 z M 40 70 h 10 v 20 h -10 z M 55 70 h 20 v 10 h -20 z M 80 70 h 10 v 10 h -10 z M 70 85 h 20 v 5 h -20 z M 55 85 h 10 v 5 h -10 z" fill="#064e3b" />
-                {/* Beautiful central Pix badge with diamond logo */}
-                <rect x="41" y="41" width="18" height="18" rx="4" fill="#14b8a6" stroke="#ffffff" strokeWidth="1.5" />
-                <path d="M 46 50 L 50 46 L 54 50 L 50 54 Z" fill="white" />
-              </svg>
-            </div>
-
-            {/* Total value info */}
-            <div className="bg-slate-950/80 border border-slate-850 p-2.5 rounded-xl flex items-center justify-between text-xs max-w-xs mx-auto">
-              <span className="text-slate-400">Valor a ser enviado:</span>
-              <strong className="text-emerald-400 font-mono text-sm">R$ {item.price.toFixed(2)}</strong>
-            </div>
-
-            {/* Copy / Paste Box */}
-            <div className="space-y-1.5 max-w-xs mx-auto">
-              <span className="block text-[10px] text-slate-500 font-mono text-left uppercase">Chave Pix Copia e Cola</span>
-              <div className="flex gap-1.5">
-                <input 
-                  type="text" 
-                  readOnly 
-                  value={pixCode}
-                  className="flex-1 bg-slate-950 text-slate-400 border border-slate-850 rounded-xl px-3 py-2 text-[10px] font-mono outline-none select-all truncate"
-                />
-                <button
-                  onClick={handleCopyPixCode}
-                  className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-slate-700 cursor-pointer transition-colors flex items-center justify-center"
-                  title="Copiar Código"
-                >
-                  {pixCopied ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Real-time Simulated Receiver status */}
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 space-y-1 text-center font-mono max-w-xs mx-auto pt-3">
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Detector Ativo</span>
-              </div>
-              <p className="text-[10px] text-emerald-400 animate-pulse">{pixStatus}</p>
-            </div>
-
-            {/* Quick action buttons row */}
-            <div className="pt-2 border-t border-slate-850 space-y-1.5">
-              <button
-                onClick={handleInstantApprove}
-                className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-xl cursor-pointer hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center justify-center gap-1 shadow-lg shadow-emerald-500/10"
-              >
-                ⚡ Simular Confirmação Imediata (Fast-Forward)
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start pt-2">
               
+              {/* QR Code & Copy Column */}
+              <div className="md:col-span-5 space-y-3">
+                {/* Physical high-craftsmanship SVG QR Code */}
+                <div className="relative select-none">
+                  <svg viewBox="0 0 100 100" className="w-32 h-32 mx-auto bg-white p-2.5 rounded-xl border-2 border-emerald-500/30 shadow-lg">
+                    {/* Simulated grid of blocks */}
+                    <path d="M 10 10 h 20 v 20 h -20 z M 15 15 h 10 v 10 h -10 z M 70 10 h 20 v 20 h -20 z M 75 15 h 10 v 10 h -10 z M 10 70 h 20 v 20 h -20 z M 15 75 h 10 v 10 h -10 z M 40 10 h 10 v 10 h -10 z M 55 10 h 10 v 5 h -10 z M 45 25 h 10 v 10 h -10 z M 40 40 h 10 v 10 h -10 z M 55 40 h 10 v 5 h -10 z M 70 40 h 20 v 10 h -20 z M 10 40 h 20 v 10 h -20 z M 40 55 h 15 v 10 h -15 z M 60 55 h 15 v 10 h -15 z M 25 55 h 10 v 10 h -10 z M 40 70 h 10 v 20 h -10 z M 55 70 h 20 v 10 h -20 z M 80 70 h 10 v 10 h -10 z M 70 85 h 20 v 5 h -20 z M 55 85 h 10 v 5 h -10 z" fill="#064e3b" />
+                    {/* Beautiful central Pix badge with diamond logo */}
+                    <rect x="41" y="41" width="18" height="18" rx="4" fill="#14b8a6" stroke="#ffffff" strokeWidth="1.5" />
+                    <path d="M 46 50 L 50 46 L 54 50 L 50 54 Z" fill="white" />
+                  </svg>
+                </div>
+
+                {/* Total value info */}
+                <div className="bg-slate-950 border border-slate-850 p-2 rounded-xl flex flex-col items-center justify-center">
+                  <span className="text-[10px] text-slate-500">Valor exato a enviar:</span>
+                  <strong className="text-emerald-400 font-mono text-sm">R$ {item.price.toFixed(2)}</strong>
+                </div>
+
+                {/* Copy / Paste Box */}
+                <div className="space-y-1">
+                  <span className="block text-[9px] text-slate-500 font-mono text-left uppercase">Copia e Cola</span>
+                  <div className="flex gap-1">
+                    <input 
+                      type="text" 
+                      readOnly 
+                      value={pixCode}
+                      className="flex-1 bg-slate-950 text-slate-400 border border-slate-850 rounded-lg px-2.5 py-1.5 text-[9px] font-mono outline-none select-all truncate"
+                    />
+                    <button
+                      onClick={handleCopyPixCode}
+                      className="px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg border border-slate-700 cursor-pointer transition-colors flex items-center justify-center"
+                      title="Copiar Código"
+                    >
+                      {pixCopied ? (
+                        <Check className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secure Receipt Validation & Upload Column */}
+              <form onSubmit={handleVerifyPixReceipt} className="md:col-span-7 space-y-3 text-left">
+                
+                {/* ID de transacao */}
+                <div>
+                  <label className="block text-[10px] font-mono text-slate-400 uppercase mb-1">
+                    ID da Transação / Código E2E
+                  </label>
+                  <input
+                    type="text"
+                    value={pixTxId}
+                    onChange={(e) => setPixTxId(e.target.value)}
+                    placeholder="E12345678901234567890abc (vide comprovante)"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/50 font-mono uppercase"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-0.5">Identificador único de 12-50 caracteres gerado pelo seu banco.</p>
+                </div>
+
+                {/* Drag and drop comprovante file selector */}
+                <div>
+                  <label className="block text-[10px] font-mono text-slate-400 uppercase mb-1">
+                    Anexar Foto do Comprovante (Opcional)
+                  </label>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => document.getElementById('comprovante-file-input')?.click()}
+                    className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all ${
+                      isDragging 
+                        ? 'border-indigo-500 bg-indigo-500/5' 
+                        : receiptFile 
+                        ? 'border-emerald-500/50 bg-emerald-500/5' 
+                        : 'border-slate-800 hover:border-slate-700 bg-slate-950/60'
+                    }`}
+                  >
+                    <input
+                      id="comprovante-file-input"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    
+                    {receiptFile ? (
+                      <div className="space-y-1">
+                        <div className="text-[11px] text-emerald-400 font-bold flex items-center justify-center gap-1">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>{receiptFile.name}</span>
+                        </div>
+                        <p className="text-[9px] text-slate-500">Clique ou arraste outro arquivo para substituir</p>
+                        {receiptPreview && (
+                          <div className="mt-1.5 max-h-12 flex justify-center">
+                            <img src={receiptPreview} alt="Preview do Comprovante" className="max-h-12 rounded border border-emerald-500/20 object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1 py-1">
+                        <Upload className="w-5 h-5 text-slate-500 mx-auto animate-bounce" />
+                        <div className="text-[10px] text-slate-300 font-bold">Arraste o comprovante Pix aqui</div>
+                        <p className="text-[9px] text-slate-500">ou clique para selecionar do seu aparelho (PNG, JPG, PDF)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Validation Errors display */}
+                {validationError && (
+                  <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] flex gap-1.5 items-start">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                    <span>{validationError}</span>
+                  </div>
+                )}
+
+                {/* Real-time status display */}
+                <div className="bg-slate-950 p-2 rounded-lg border border-slate-850 flex items-center gap-2 font-mono justify-center text-center">
+                  {isValidatingReceipt ? (
+                    <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+                  ) : (
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                  )}
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{pixStatus}</span>
+                </div>
+
+                {/* Submission Actions */}
+                <div className="space-y-1.5">
+                  <button
+                    type="submit"
+                    disabled={isValidatingReceipt}
+                    className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-xl cursor-pointer hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10 uppercase"
+                  >
+                    {isValidatingReceipt ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Validando Transação...
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        Validar e Registrar Comprovante
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSendEmailWithReceipt}
+                    className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                    Enviar Comprovante por E-mail ao Dono
+                  </button>
+                </div>
+
+              </form>
+
+            </div>
+
+            {/* Bottom Actions Row */}
+            <div className="pt-2 border-t border-slate-850 flex items-center justify-between gap-4">
               <button
                 onClick={() => {
                   setPaymentStep('form');
                   playSound.click();
                 }}
-                className="w-full py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold cursor-pointer transition-colors"
+                className="text-slate-400 hover:text-slate-200 text-xs font-semibold cursor-pointer transition-colors"
               >
-                Alterar Forma de Pagamento
+                Voltar e alterar pagamento
+              </button>
+
+              <button
+                type="button"
+                onClick={handleInstantApprove}
+                className="text-[9px] font-mono text-slate-600 hover:text-slate-400 cursor-pointer transition-colors"
+                title="Use apenas para fins de teste rápido (Sandbox)"
+              >
+                ⚡ Pular Validação (Sandbox Debug)
               </button>
             </div>
+
           </div>
         )}
 

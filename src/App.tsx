@@ -375,13 +375,13 @@ export default function App() {
       {/* Global persistent Footer */}
       <footer className="bg-slate-900 border-t border-slate-800/80 py-5 text-center text-xs text-slate-500 mt-auto font-mono">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 GameZone. Todos os direitos reservados.</p>
+          <p>© 2026 GameZone. Contato &amp; Suporte: <a href="mailto:tiagojorgeengenheiro@gmail.com" className="text-indigo-400 hover:underline select-all font-sans font-medium">tiagojorgeengenheiro@gmail.com</a></p>
           <div className="flex items-center gap-4 text-[10px]">
             <span>Segurança Certificada SSL</span>
             <span>•</span>
             <span>PCI-DSS Nível 1</span>
             <span>•</span>
-            <span>Simulador de Alta Fidelidade</span>
+            <span>Pix Banco Central</span>
           </div>
         </div>
       </footer>
