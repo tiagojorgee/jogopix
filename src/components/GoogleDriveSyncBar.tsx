@@ -24,6 +24,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
+import { AppUser } from './AuthModal';
 
 interface GoogleDriveSyncBarProps {
   stats: PlayerStats;
@@ -35,6 +36,8 @@ interface GoogleDriveSyncBarProps {
   setWithdrawLimit: React.Dispatch<React.SetStateAction<number>>;
   setLogs: React.Dispatch<React.SetStateAction<TransactionLog[]>>;
   triggerToast: (msg: string) => void;
+  loggedInUser: AppUser | null;
+  setLoggedInUser: (user: AppUser | null) => void;
 }
 
 export const GoogleDriveSyncBar: React.FC<GoogleDriveSyncBarProps> = ({
@@ -47,6 +50,8 @@ export const GoogleDriveSyncBar: React.FC<GoogleDriveSyncBarProps> = ({
   setWithdrawLimit,
   setLogs,
   triggerToast,
+  loggedInUser,
+  setLoggedInUser,
 }) => {
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -67,14 +72,34 @@ export const GoogleDriveSyncBar: React.FC<GoogleDriveSyncBarProps> = ({
       if (currentUser && currentToken) {
         setSyncStatus('idle');
         checkBackupOnDrive(currentToken);
+        
+        // Auto sign-in global app user if they connected with google
+        setLoggedInUser({
+          email: currentUser.email || '',
+          name: currentUser.displayName || 'Usuário Google',
+          avatarUrl: currentUser.photoURL || undefined,
+          provider: 'google'
+        });
       } else {
         setSyncStatus('disconnected');
         setHasRemoteBackup(false);
         setRemoteFileId(null);
+        
+        // Auto log-out global app user if Google gets disconnected and they were logged in with Google
+        // We check using local storage or reference since state might be captured in closure
+        const cachedUserStr = localStorage.getItem('gamezone_logged_in_user');
+        if (cachedUserStr) {
+          try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            if (cachedUser && cachedUser.provider === 'google') {
+              setLoggedInUser(null);
+            }
+          } catch (e) {}
+        }
       }
     });
     return unsubscribe;
-  }, []);
+  }, [setLoggedInUser]);
 
   // Search for backup on drive
   const checkBackupOnDrive = async (accessToken: string) => {

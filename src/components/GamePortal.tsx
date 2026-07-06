@@ -7,6 +7,7 @@ import { AviatorGame } from './AviatorGame';
 import { playSound } from '../utils/audio';
 import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle, Star, Sparkles, Flame, Plane } from 'lucide-react';
 import { AdBanner } from './AdBanner';
+import { AppUser } from './AuthModal';
 
 interface GamePortalProps {
   stats: PlayerStats;
@@ -14,6 +15,8 @@ interface GamePortalProps {
   addLog: (type: 'earn' | 'purchase_coins' | 'purchase_booster' | 'purchase_cosmetic' | 'stage_skip', desc: string, amount: number, currency: 'coins' | 'real') => void;
   openShop: () => void;
   openCheckoutForQuickBuy: (itemId: string) => void;
+  loggedInUser: AppUser | null;
+  onOpenAuthModal: () => void;
 }
 
 export const GamePortal: React.FC<GamePortalProps> = ({
@@ -21,9 +24,21 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   updateStats,
   addLog,
   openShop,
-  openCheckoutForQuickBuy
+  openCheckoutForQuickBuy,
+  loggedInUser,
+  onOpenAuthModal
 }) => {
   const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator' | null>(null);
+
+  const handlePlayGame = (gameId: 'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator') => {
+    if (!loggedInUser) {
+      playSound.gameover();
+      onOpenAuthModal();
+      return;
+    }
+    setActiveGame(gameId);
+    playSound.click();
+  };
 
   // Helper to count active stage skips owned by counting 'booster_stage_skip' in stats.unlockedAccessories
   const stageSkipsOwned = stats.unlockedAccessories.filter(x => x === 'booster_stage_skip').length;
@@ -187,7 +202,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                 Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
               </div>
               <button
-                onClick={() => setActiveGame('jumper')}
+                onClick={() => handlePlayGame('jumper')}
                 className="flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-jumper"
               >
@@ -222,7 +237,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                 Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
               </div>
               <button
-                onClick={() => setActiveGame('clicker')}
+                onClick={() => handlePlayGame('clicker')}
                 className="flex items-center gap-1.5 px-4.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/15 hover:shadow-purple-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-clicker"
               >
@@ -257,10 +272,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                 Custo de jogo: <strong className="text-cyan-400">🪙 30 Moedas</strong>
               </div>
               <button
-                onClick={() => {
-                  setActiveGame('roulette');
-                  playSound.click();
-                }}
+                onClick={() => handlePlayGame('roulette')}
                 className="flex items-center gap-1.5 px-4.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/15 hover:shadow-cyan-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-roulette"
               >
@@ -295,10 +307,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                 Custo de jogo: <strong className="text-amber-400">Moedas (Sua Aposta)</strong>
               </div>
               <button
-                onClick={() => {
-                  setActiveGame('tiger');
-                  playSound.click();
-                }}
+                onClick={() => handlePlayGame('tiger')}
                 className="flex items-center gap-1.5 px-4.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-600/20 hover:shadow-amber-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-tiger"
               >
@@ -333,10 +342,7 @@ export const GamePortal: React.FC<GamePortalProps> = ({
                 Custo de jogo: <strong className="text-rose-400">Moedas (Sua Aposta)</strong>
               </div>
               <button
-                onClick={() => {
-                  setActiveGame('aviator');
-                  playSound.click();
-                }}
+                onClick={() => handlePlayGame('aviator')}
                 className="flex items-center gap-1.5 px-4.5 py-2 bg-rose-600 hover:bg-rose-550 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-600/15 hover:shadow-rose-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 id="btn-play-aviator"
               >

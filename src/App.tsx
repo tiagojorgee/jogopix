@@ -12,10 +12,48 @@ import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
 import { getLevelForPoints, SKIN_LEVELS, ACCESSORY_LEVELS, AURA_LEVELS } from './utils/levelManager';
+import { AuthModal, AppUser } from './components/AuthModal';
+import { googleSignOut } from './utils/googleDriveDb';
 
 export default function App() {
   // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque'
   const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque'>('games');
+
+  // User Authentication States
+  const [loggedInUser, setLoggedInUser] = useState<AppUser | null>(() => {
+    const cached = localStorage.getItem('gamezone_logged_in_user');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Error parsing cached user:', e);
+      }
+    }
+    return null;
+  });
+
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (loggedInUser) {
+      localStorage.setItem('gamezone_logged_in_user', JSON.stringify(loggedInUser));
+    } else {
+      localStorage.removeItem('gamezone_logged_in_user');
+    }
+  }, [loggedInUser]);
+
+  const handleLogout = async () => {
+    playSound.click();
+    if (loggedInUser?.provider === 'google') {
+      try {
+        await googleSignOut();
+      } catch (e) {
+        console.error('Error signing out Google:', e);
+      }
+    }
+    setLoggedInUser(null);
+    triggerToast('ℹ️ Sessão finalizada com sucesso.');
+  };
   
   // Checkout triggers
   const [checkoutItem, setCheckoutItem] = useState<ShopItem | null>(null);
@@ -296,6 +334,9 @@ export default function App() {
         setActiveTab={setActiveTab}
         openCheckoutForQuickBuy={openCheckoutForQuickBuy}
         realBalance={realBalance}
+        loggedInUser={loggedInUser}
+        onLogout={handleLogout}
+        onOpenAuthModal={() => setShowAuthModal(true)}
       />
 
       {/* Google Drive Cloud DB Sync Bar */}
@@ -309,6 +350,8 @@ export default function App() {
         setWithdrawLimit={setWithdrawLimit}
         setLogs={setLogs}
         triggerToast={triggerToast}
+        loggedInUser={loggedInUser}
+        setLoggedInUser={setLoggedInUser}
       />
 
       {/* App-level Toast notifications */}
@@ -336,6 +379,8 @@ export default function App() {
             addLog={addLog}
             openShop={() => setActiveTab('shop')}
             openCheckoutForQuickBuy={openCheckoutForQuickBuy}
+            loggedInUser={loggedInUser}
+            onOpenAuthModal={() => setShowAuthModal(true)}
           />
         )}
 
@@ -385,6 +430,17 @@ export default function App() {
           onSuccess={handleCheckoutSuccess}
         />
       )}
+
+      {/* User Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={(user) => {
+          setLoggedInUser(user);
+          setShowAuthModal(false);
+          triggerToast(`👋 Bem-vindo de volta, ${user.name}!`);
+        }}
+      />
 
       {/* Global persistent Footer */}
       <footer className="bg-slate-900 border-t border-slate-800/80 py-5 text-center text-xs text-slate-500 mt-auto font-mono">
