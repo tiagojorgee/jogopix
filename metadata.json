@@ -1,6 +1,6 @@
 {
   "name": "GameZone & Avatar Shop",
-  "description": "Portal de jogos interativos com personalização de avatares, loja de boosters e vidas, e checkout simulado seguro.",
+  "description": "Portal de jogos interativos com personalização de avatares, loja de boosters, e salvamento em nuvem no Google Drive.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

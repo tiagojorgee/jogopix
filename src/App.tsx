@@ -7,6 +7,7 @@ import { Shop } from './components/Shop';
 import { TransactionLogs } from './components/TransactionLogs';
 import { CheckoutModal } from './components/CheckoutModal';
 import { WithdrawSection } from './components/WithdrawSection';
+import { GoogleDriveSyncBar } from './components/GoogleDriveSyncBar';
 import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
@@ -295,6 +296,19 @@ export default function App() {
         setActiveTab={setActiveTab}
         openCheckoutForQuickBuy={openCheckoutForQuickBuy}
         realBalance={realBalance}
+      />
+
+      {/* Google Drive Cloud DB Sync Bar */}
+      <GoogleDriveSyncBar
+        stats={stats}
+        realBalance={realBalance}
+        withdrawLimit={withdrawLimit}
+        logs={logs}
+        setStats={setStats}
+        setRealBalance={setRealBalance}
+        setWithdrawLimit={setWithdrawLimit}
+        setLogs={setLogs}
+        triggerToast={triggerToast}
       />
 
       {/* App-level Toast notifications */}
