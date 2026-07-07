@@ -22,7 +22,7 @@ interface GamePortalProps {
   setRealBalance: React.Dispatch<React.SetStateAction<number>>;
   withdrawLimit: number;
   setWithdrawLimit: React.Dispatch<React.SetStateAction<number>>;
-  setActiveTab?: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football') => void;
+  setActiveTab?: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football') => void;
 }
 
 export const GamePortal: React.FC<GamePortalProps> = ({

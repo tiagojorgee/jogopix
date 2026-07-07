@@ -135,13 +135,13 @@ export const SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'limit_upgrade_500',
-    name: 'Upgrade de Limite de Saque (+R$ 500,00)',
-    description: 'Aumenta instantaneamente o seu limite de saque em R$ 500,00 adicionais para retirar grandes prêmios imediatamente sem travas.',
+    name: 'Super Pack de Moedas (5000 + Bônus)',
+    description: 'Adquira um super pacote com 5000 moedas e bônus exclusivo de 5 vidas extras para usar em qualquer jogo do sistema.',
     price: 25.00,
     currency: 'real',
-    category: 'booster',
+    category: 'coins',
     subCategory: 'pack',
-    visualValue: '📈 R$ 500',
-    value: 500
+    visualValue: '🪙 5000',
+    value: 5000
   }
 ];

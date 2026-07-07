@@ -27,8 +27,8 @@ import { AppUser } from './AuthModal';
 
 interface HeaderProps {
   stats: PlayerStats;
-  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema';
-  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema') => void;
+  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema';
+  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema') => void;
   openCheckoutForQuickBuy: (itemId: string) => void;
   realBalance?: number;
   loggedInUser: AppUser | null;
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema') => {
+  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema') => {
     setActiveTab(tab);
     playSound.click();
   };
@@ -256,16 +256,9 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-950/35 border border-emerald-500/25 rounded-lg shadow-[0_0_12px_rgba(16,185,129,0.06)] shrink-0">
               <Wallet className="w-3.5 h-3.5 text-emerald-400" />
               <div className="text-left">
-                <div className="text-[8px] text-emerald-400 leading-none font-extrabold uppercase tracking-wider">Saldo Sacável</div>
+                <div className="text-[8px] text-emerald-400 leading-none font-extrabold uppercase tracking-wider">Saldo de Compras</div>
                 <div className="text-xs md:text-sm font-bold text-emerald-300 font-mono leading-tight">R$ {realBalance.toFixed(2)}</div>
               </div>
-              <button
-                onClick={() => handleTabClick('saque')}
-                className="ml-1 text-[9px] px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-md cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md shadow-emerald-700/20"
-                id="btn-nav-saque"
-              >
-                Sacar
-              </button>
             </div>
           )}
 
@@ -452,18 +445,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <History className="w-3.5 h-3.5 text-blue-400" />
           Extrato Seguro
-        </button>
-        <button
-          onClick={() => handleTabClick('saque')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-            activeTab === 'saque'
-              ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white border border-indigo-500/30 shadow-lg shadow-indigo-600/15 scale-[1.02]'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
-          }`}
-          id="tab-saque"
-        >
-          <Wallet className="w-3.5 h-3.5 text-teal-400" />
-          Saque &amp; Caixa
         </button>
       </div>
     </header>

@@ -6,7 +6,6 @@ import { AvatarCustomizer } from './components/AvatarCustomizer';
 import { Shop } from './components/Shop';
 import { TransactionLogs } from './components/TransactionLogs';
 import { CheckoutModal } from './components/CheckoutModal';
-import { WithdrawSection } from './components/WithdrawSection';
 import { GoogleDriveSyncBar } from './components/GoogleDriveSyncBar';
 import { FootballBets } from './components/FootballBets';
 import { Cinema } from './components/Cinema';
@@ -18,8 +17,8 @@ import { AuthModal, AppUser } from './components/AuthModal';
 import { googleSignOut } from './utils/googleDriveDb';
 
 export default function App() {
-  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema'
-  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema'>('games');
+  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'
+  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'>('games');
 
   // User Authentication States
   const [loggedInUser, setLoggedInUser] = useState<AppUser | null>(() => {
@@ -270,6 +269,9 @@ export default function App() {
         nextLives += item.value;
       } else if (item.subCategory === 'pack' && item.id.includes('coins')) {
         nextCoins += item.value;
+      } else if (item.id === 'limit_upgrade_500') {
+        nextCoins += item.value;
+        nextLives += 5; // 5 bonus lives!
       } else if (item.id === 'pack_skips_3') {
         // Push 3 copies of 'booster_stage_skip' to unlockedAccessories
         nextAccessories.push(...Array(item.value).fill('booster_stage_skip'));
@@ -301,13 +303,9 @@ export default function App() {
     const logType = isPack ? 'purchase_coins' : 'purchase_booster';
     addLog(logType, `Compra Segura aprovada: ${item.name}`, item.price, 'real');
 
-    // Increase withdrawal limit on purchase
-    const limitIncrement = item.id === 'limit_upgrade_500' ? item.value : item.price;
-    setWithdrawLimit((prev) => prev + limitIncrement);
-
     playSound.purchase();
     setCheckoutItem(null);
-    triggerToast(`Sucesso! Seu ${item.name} foi creditado com segurança e seu limite de saque aumentou em R$ ${limitIncrement.toFixed(2)}.`);
+    triggerToast(`Sucesso! Seu ${item.name} foi creditado com segurança no sistema.`);
   };
 
   function triggerToast(msg: string) {
@@ -429,24 +427,13 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'saque' && (
-          <WithdrawSection
-            stats={stats}
-            updateStats={updateStats}
-            addLog={addLog}
-            realBalance={realBalance}
-            setRealBalance={setRealBalance}
-            withdrawLimit={withdrawLimit}
-            setWithdrawLimit={setWithdrawLimit}
-            openShop={() => setActiveTab('shop')}
-          />
-        )}
-
         {activeTab === 'cinema' && (
           <Cinema
             stats={stats}
             updateStats={updateStats}
             addLog={addLog}
+            loggedInUser={loggedInUser}
+            onOpenLogin={() => setShowAuthModal(true)}
           />
         )}
       </main>
@@ -492,7 +479,6 @@ export default function App() {
               <button onClick={() => setActiveTab('cinema')} className="hover:text-red-500 transition-colors cursor-pointer">Sessão Cinema</button>
               <button onClick={() => setActiveTab('football')} className="hover:text-emerald-400 transition-colors cursor-pointer">Futebol</button>
               <button onClick={() => setActiveTab('shop')} className="hover:text-purple-400 transition-colors cursor-pointer">Loja VIP</button>
-              <button onClick={() => setActiveTab('saque')} className="hover:text-amber-400 transition-colors cursor-pointer">Saques</button>
             </div>
           </div>
 

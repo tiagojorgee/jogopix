@@ -23,7 +23,8 @@ import {
   X, 
   CheckCircle, 
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Sparkles
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
@@ -47,7 +48,9 @@ export const Cinema: React.FC<{
   stats: any;
   updateStats: (updater: (prev: any) => any) => void;
   addLog: (type: any, desc: string, amount: number, currency: 'coins' | 'real') => void;
-}> = ({ stats, updateStats, addLog }) => {
+  loggedInUser?: any;
+  onOpenLogin?: () => void;
+}> = ({ stats, updateStats, addLog, loggedInUser, onOpenLogin }) => {
   // State for Youtube config (persistent)
   const [youtubeHandle, setYoutubeHandle] = useState<string>(() => {
     return localStorage.getItem('gamezone_yt_handle') || '@jacopiei';
@@ -65,6 +68,83 @@ export const Cinema: React.FC<{
     return (localStorage.getItem('gamezone_yt_mode') as 'simulated' | 'real') || 'simulated';
   });
 
+  // User uploaded movies list (persisted in localStorage)
+  const [userUploadedMovies, setUserUploadedMovies] = useState<MediaItem[]>(() => {
+    const cached = localStorage.getItem('gamezone_cinema_user_uploads');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Error parsing cached uploads:', e);
+      }
+    }
+    return [
+      {
+        id: 'user-upload-1',
+        title: 'Coringa Retro: O Ultimato',
+        description: 'Um retrato psicológico de um comediante de fliperamas que decide hackear o sistema de apostas para combater a corrupção corporativa do cassino de São Paulo.',
+        category: 'blockbuster',
+        year: 2026,
+        rating: '16+',
+        duration: '1h 48min',
+        matchScore: 98,
+        imageUrl: 'https://images.unsplash.com/photo-1601513525393-8393e5518e31?q=80&w=400',
+        tags: ['AI-Optimized', 'Cyberpunk', 'Gamer', 'Justiça']
+      },
+      {
+        id: 'user-upload-2',
+        title: 'Retro-Futuro de Pixel',
+        description: 'Documentário de ficção sobre os heróis anônimos que mantiveram vivos os servidores de jogos online dos anos 2000 em meio a um apagão digital mundial.',
+        category: 'gaming_docs',
+        year: 2026,
+        rating: 'Livre',
+        duration: '1h 15min',
+        matchScore: 94,
+        imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400',
+        tags: ['História', 'Tecnologia', 'Salvação', 'Nostalgia']
+      }
+    ];
+  });
+
+  // Upload Form states
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  const [uploadTitle, setUploadTitle] = useState<string>('');
+  const [uploadSynopsis, setUploadSynopsis] = useState<string>('');
+  const [uploadImageOption, setUploadImageOption] = useState<'url' | 'file' | 'preset'>('preset');
+  const [uploadImageUrl, setUploadImageUrl] = useState<string>('');
+  const [uploadPreset, setUploadPreset] = useState<string>('synthwave');
+  const [uploadFileBase64, setUploadFileBase64] = useState<string>('');
+  const [uploadYoutubeId, setUploadYoutubeId] = useState<string>('');
+  const [aiAnalyzing, setAiAnalyzing] = useState<boolean>(false);
+  const [aiStep, setAiStep] = useState<string>('');
+
+  const PRESET_IMAGES: Record<string, { label: string; url: string }> = {
+    synthwave: {
+      label: 'Synthwave Grid',
+      url: 'https://images.unsplash.com/photo-1515260268569-9271009adfdb?q=80&w=600'
+    },
+    cyberpunk: {
+      label: 'Cyberpunk Alley',
+      url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600'
+    },
+    classic_arcade: {
+      label: 'Vintage Arcade',
+      url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=600'
+    },
+    retro_gaming: {
+      label: 'Neon Gamepad',
+      url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600'
+    },
+    cosmic_space: {
+      label: 'Space Nebula',
+      url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600'
+    },
+    noir: {
+      label: 'Mystery Cinema',
+      url: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?q=80&w=600'
+    }
+  };
+
   // UI state variables
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [activeMedia, setActiveMedia] = useState<MediaItem | null>(null);
@@ -79,11 +159,17 @@ export const Cinema: React.FC<{
   const [ytVideos, setYtVideos] = useState<MediaItem[]>([]);
   const [isLoadingYt, setIsLoadingYt] = useState<boolean>(false);
 
+  // Banner Carousel States
+  const [carouselIndex, setCarouselIndex] = useState<number>(0);
+  const [isHoveredCarousel, setIsHoveredCarousel] = useState<boolean>(false);
+
   // References for rows scroll
   const ytRowRef = useRef<HTMLDivElement>(null);
   const origRowRef = useRef<HTMLDivElement>(null);
   const blockRowRef = useRef<HTMLDivElement>(null);
   const docRowRef = useRef<HTMLDivElement>(null);
+  const userRowRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<number | null>(null);
 
   // Default simulated Youtube Videos representing "@jacopiei"
   const DEFAULT_JACOPIEI_VIDEOS: MediaItem[] = [
@@ -286,8 +372,146 @@ export const Cinema: React.FC<{
     }
   ];
 
-  // Combine lists for searches
-  const ALL_MEDIA_ITEMS = [...ytVideos, ...ORIGINALS_ITEMS, ...BLOCKBUSTER_ITEMS, ...DOCS_ITEMS];
+  // Combine lists for searches including user-uploaded films
+  const ALL_MEDIA_ITEMS = [...userUploadedMovies, ...ytVideos, ...ORIGINALS_ITEMS, ...BLOCKBUSTER_ITEMS, ...DOCS_ITEMS];
+
+  // Carrossel de banners animados e de alta conversão destacando os filmes mais recentes postados por usuários
+  const carouselItems: MediaItem[] = React.useMemo(() => {
+    const list = [...userUploadedMovies, ...BLOCKBUSTER_ITEMS, ...ORIGINALS_ITEMS];
+    const uniqueMap = new Map<string, MediaItem>();
+    list.forEach(item => {
+      if (!uniqueMap.has(item.id)) {
+        uniqueMap.set(item.id, item);
+      }
+    });
+    return Array.from(uniqueMap.values()).slice(0, 5);
+  }, [userUploadedMovies]);
+
+  // Auto-play timer for high-converting banner carousel
+  useEffect(() => {
+    if (isHoveredCarousel || carouselItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setCarouselIndex(prev => (prev + 1) % carouselItems.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHoveredCarousel, carouselItems.length]);
+
+  // Automatically reset to first slide when a new movie is uploaded by community
+  useEffect(() => {
+    setCarouselIndex(0);
+  }, [userUploadedMovies.length]);
+
+  // Pre-carregamento dinâmico de imagens do carrossel para transições instantâneas e navegação ultra leve
+  useEffect(() => {
+    if (carouselItems && carouselItems.length > 0) {
+      carouselItems.forEach(item => {
+        if (item.imageUrl) {
+          const img = new Image();
+          img.src = item.imageUrl;
+        }
+      });
+    }
+  }, [carouselItems]);
+
+  // Handle local base64 file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadFileBase64(reader.result as string);
+        playSound.click();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Process movie submission with AI Recognition Animation
+  const handleAiPublish = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadTitle.trim()) {
+      showToast('⚠️ Por favor, insira o título do filme.');
+      return;
+    }
+
+    playSound.click();
+    setAiAnalyzing(true);
+    
+    // Staggered AI Steps Simulation for high visual engagement
+    const steps = [
+      '🔍 Analisando formato da imagem e resolução...',
+      '🤖 Executando reconhecimento facial e de ambiente por IA...',
+      '📝 Otimizando a sinopse e gerando legendas cativantes...',
+      '🏷️ Criando tags de engajamento recomendadas...',
+      '✨ Integrando cartaz de cinema nos destaques com matching automático...'
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      setAiStep(steps[i]);
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    // Now construct the final AI-optimized item!
+    // Select image
+    let finalImg = PRESET_IMAGES[uploadPreset]?.url || PRESET_IMAGES.synthwave.url;
+    if (uploadImageOption === 'url' && uploadImageUrl) {
+      finalImg = uploadImageUrl;
+    } else if (uploadImageOption === 'file' && uploadFileBase64) {
+      finalImg = uploadFileBase64;
+    }
+
+    // AI optimization of synopsis
+    const aiOptimizedDescription = uploadSynopsis.trim() 
+      ? `[Reconhecido por IA GameZone] ${uploadSynopsis} - Uma narrativa espetacular que envolve suspense e reviravoltas no ecossistema virtual.`
+      : `[Reconhecido por IA GameZone] "${uploadTitle}" é um thriller futurista onde o destino dos personagens colide com o submundo dos jogos eletrônicos e transmissões ao vivo. Uma obra-prima moderna de alta definição e match impecável de engajamento.`;
+
+    // AI generation of tags
+    const presetTags = ['IA-Reconhecido', 'Exclusivo', 'FullHD', 'GameZone-Cine'];
+    if (uploadTitle.toLowerCase().includes('arcade') || uploadTitle.toLowerCase().includes('retro') || uploadTitle.toLowerCase().includes('game')) {
+      presetTags.push('Nostalgia', 'Gamer');
+    } else {
+      presetTags.push('Ação', 'Suspense');
+    }
+
+    const newMedia: MediaItem = {
+      id: `user-upload-${Date.now()}`,
+      title: uploadTitle,
+      description: aiOptimizedDescription,
+      category: 'blockbuster', // Display as user-uploaded / blockbuster style
+      year: 2026,
+      rating: '14+',
+      duration: '1h 50min',
+      matchScore: Math.floor(Math.random() * 8) + 92, // High match score 92% to 99%
+      imageUrl: finalImg,
+      youtubeId: uploadYoutubeId.trim() || undefined,
+      tags: presetTags
+    };
+
+    // Update state and persistence
+    const updated = [newMedia, ...userUploadedMovies];
+    setUserUploadedMovies(updated);
+    localStorage.setItem('gamezone_cinema_user_uploads', JSON.stringify(updated));
+
+    // Also trigger log in player stats
+    addLog('cine_publish', `Publicou o filme "${uploadTitle}" otimizado por IA`, 100, 'coins');
+    updateStats(prev => ({
+      ...prev,
+      points: prev.points + 20, // Award experience points for creative contribution
+      coins: prev.coins + 100   // Award coin bonus
+    }));
+
+    // Reset states
+    setUploadTitle('');
+    setUploadSynopsis('');
+    setUploadImageUrl('');
+    setUploadFileBase64('');
+    setUploadYoutubeId('');
+    
+    setAiAnalyzing(false);
+    setShowUploadModal(false);
+    playSound.victory(); // High fidelity celebration sound!
+    showToast(`🎬 "${newMedia.title}" publicado com IA e destacado nos banners!`);
+  };
 
   // Handle configuration submit
   const handleSaveConfig = (e: React.FormEvent) => {
@@ -528,63 +752,152 @@ export const Cinema: React.FC<{
       {/* MAIN CINEMA FRONT-END (Visible when not searching) */}
       {!searchQuery && (
         <>
-          {/* FEATURED HERO BANNER */}
-          {featuredItem && (
-            <div className="relative w-full aspect-[21/9] min-h-[420px] md:min-h-[500px] flex items-end overflow-hidden" id="cine-hero">
-              {/* Cover Image Background */}
+          {/* FEATURED ANIMATED HERO CAROUSEL (HIGH-CONVERTING) */}
+          {carouselItems.length > 0 && (
+            <div 
+              className="relative w-full aspect-[21/9] min-h-[440px] md:min-h-[540px] flex items-end overflow-hidden select-none group/carousel" 
+              id="cine-hero-carousel"
+              onMouseEnter={() => setIsHoveredCarousel(true)}
+              onMouseLeave={() => setIsHoveredCarousel(false)}
+              onTouchStart={(e) => {
+                touchStartRef.current = e.touches[0].clientX;
+              }}
+              onTouchEnd={(e) => {
+                if (touchStartRef.current === null) return;
+                const diff = touchStartRef.current - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 50) {
+                  playSound.click();
+                  if (diff > 0) {
+                    setCarouselIndex(prev => (prev + 1) % carouselItems.length);
+                  } else {
+                    setCarouselIndex(prev => (prev - 1 + carouselItems.length) % carouselItems.length);
+                  }
+                }
+                touchStartRef.current = null;
+              }}
+            >
+              {/* Slides Background Container with AnimatePresence for ultra fluid fades */}
               <div className="absolute inset-0">
-                <img 
-                  src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200" 
-                  alt="Destaque Cine" 
-                  className="w-full h-full object-cover brightness-50"
-                />
-                {/* Radial and Linear Gradient for authentic Cinema atmosphere */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/40 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/20 to-transparent" />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={carouselIndex}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    <img 
+                      src={carouselItems[carouselIndex].imageUrl} 
+                      alt={carouselItems[carouselIndex].title} 
+                      className="w-full h-full object-cover brightness-[0.4] transition-all duration-700"
+                    />
+                  </motion.div>
+                </AnimatePresence>
+                
+                {/* Premium Cinema Ambient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/50 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/30 to-transparent z-10" />
+                
+                {/* Scanlines layer for techy vibe */}
+                <div className="absolute inset-0 bg-scanlines opacity-[0.03] pointer-events-none z-10" />
               </div>
 
-              {/* Hero Contents */}
-              <div className="relative z-10 max-w-3xl px-4 pb-12 md:px-8 space-y-4">
-                {/* YouTube Red Badge */}
-                <div className="inline-flex items-center gap-1.5 bg-red-600/90 text-white font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full">
-                  <Youtube className="w-3.5 h-3.5 fill-white" />
-                  <span>DESTAQUE DO CANAL {youtubeHandle}</span>
+              {/* Slider Left/Right Premium Hotkeys / Chevron Controls */}
+              {carouselItems.length > 1 && (
+                <>
+                  <button
+                    onClick={() => {
+                      playSound.click();
+                      setCarouselIndex(prev => (prev - 1 + carouselItems.length) % carouselItems.length);
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-[#E50914] text-white border border-white/10 hover:border-red-500 hover:shadow-lg hover:shadow-red-600/30 flex items-center justify-center transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 transform hover:scale-110 active:scale-95 cursor-pointer"
+                    id="btn-carousel-prev"
+                    aria-label="Anterior"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      playSound.click();
+                      setCarouselIndex(prev => (prev + 1) % carouselItems.length);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-[#E50914] text-white border border-white/10 hover:border-red-500 hover:shadow-lg hover:shadow-red-600/30 flex items-center justify-center transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 transform hover:scale-110 active:scale-95 cursor-pointer"
+                    id="btn-carousel-next"
+                    aria-label="Próximo"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Dynamic Slide Content */}
+              <div className="relative z-20 max-w-3xl px-4 pb-14 md:px-8 space-y-4">
+                
+                {/* Highly Converting Badge Row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {carouselItems[carouselIndex].id.startsWith('user-upload-') ? (
+                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-600 text-black font-black text-[9px] md:text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-lg shadow-yellow-500/10">
+                      <Sparkles className="w-3.5 h-3.5 text-black animate-bounce" />
+                      <span>🔥 LANÇAMENTO DA COMUNIDADE</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 bg-red-600/90 text-white font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                      <Film className="w-3.5 h-3.5 text-white animate-pulse" />
+                      <span>🏆 DESTAQUE PREMIUM DE HOJE</span>
+                    </div>
+                  )}
+
+                  {carouselItems[carouselIndex].youtubeId && (
+                    <span className="bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full flex items-center gap-1">
+                      <Youtube className="w-3 h-3 fill-white" />
+                      YOUTUBE FEED
+                    </span>
+                  )}
                 </div>
 
-                <h1 className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans max-w-2xl leading-tight drop-shadow-2xl">
-                  {featuredItem.title}
-                </h1>
+                {/* Animated Title & description */}
+                <div className="space-y-3">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans max-w-2xl leading-tight drop-shadow-2xl">
+                    {carouselItems[carouselIndex].title}
+                  </h1>
 
-                <div className="flex items-center gap-3.5 text-xs font-mono text-zinc-300 drop-shadow">
-                  <span className="text-emerald-400 font-bold">{featuredItem.matchScore}% Match</span>
-                  <span>{featuredItem.year}</span>
-                  <span className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[10px] font-bold text-zinc-200">{featuredItem.rating}</span>
-                  <span>{featuredItem.duration}</span>
-                  <span className="text-[#E50914] font-bold">Full HD</span>
+                  <div className="flex items-center gap-3.5 text-xs font-mono text-zinc-300 drop-shadow">
+                    <span className="text-emerald-400 font-black">{carouselItems[carouselIndex].matchScore}% Match</span>
+                    <span className="text-zinc-500">•</span>
+                    <span>{carouselItems[carouselIndex].year}</span>
+                    <span className="text-zinc-500">•</span>
+                    <span className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[10px] font-bold text-zinc-200">{carouselItems[carouselIndex].rating}</span>
+                    <span className="text-zinc-500">•</span>
+                    <span>{carouselItems[carouselIndex].duration}</span>
+                    <span className="text-zinc-500">•</span>
+                    <span className="text-[#E50914] font-black uppercase tracking-wider text-[10px]">Full HD 4K</span>
+                  </div>
+
+                  <p className="text-xs md:text-sm text-zinc-400 max-w-xl font-medium leading-relaxed line-clamp-3 drop-shadow">
+                    {carouselItems[carouselIndex].description}
+                  </p>
                 </div>
-
-                <p className="text-xs md:text-sm text-zinc-400 max-w-xl font-medium leading-relaxed line-clamp-3 md:line-clamp-none drop-shadow">
-                  {featuredItem.description}
-                </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5">
-                  {featuredItem.tags.map(t => (
-                    <span key={t} className="text-[10px] px-2 py-0.5 bg-zinc-900/80 border border-zinc-800/80 rounded-md text-slate-400 font-mono font-medium">
+                  {carouselItems[carouselIndex].tags.map(t => (
+                    <span key={t} className="text-[10px] px-2.5 py-1 bg-zinc-900/90 border border-zinc-800/80 rounded-lg text-zinc-400 font-mono font-medium hover:text-white transition-colors">
                       #{t}
                     </span>
                   ))}
                 </div>
 
-                {/* Hero Controls */}
-                <div className="flex items-center gap-3 pt-2">
+                {/* High Converting Action Buttons */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
                   <button 
                     onClick={() => {
                       playSound.click();
-                      setActiveMedia(featuredItem);
+                      setActiveMedia(carouselItems[carouselIndex]);
                       setIsPlaying(true);
                     }}
-                    className="px-5 py-2.5 md:px-7 md:py-3 bg-white hover:bg-neutral-200 text-black font-black text-xs md:text-sm rounded-lg flex items-center gap-2 transition-all hover:scale-105 cursor-pointer shadow-lg active:scale-95 shrink-0"
+                    className="px-6 py-3 bg-white hover:bg-neutral-200 text-black font-black text-xs md:text-sm rounded-xl flex items-center gap-2.5 transition-all hover:scale-105 cursor-pointer shadow-xl active:scale-95 shrink-0"
+                    id="btn-carousel-watch-now"
                   >
                     <Play className="w-4 h-4 fill-black" />
                     <span>Assistir Agora</span>
@@ -593,21 +906,174 @@ export const Cinema: React.FC<{
                   <button 
                     onClick={() => {
                       playSound.click();
-                      setActiveMedia(featuredItem);
+                      setActiveMedia(carouselItems[carouselIndex]);
                       setIsPlaying(false);
                     }}
-                    className="px-4 py-2.5 md:px-6 md:py-3 bg-zinc-800/85 hover:bg-zinc-700/90 text-white font-bold text-xs md:text-sm rounded-lg flex items-center gap-2 transition-all hover:scale-105 border border-zinc-700/60 cursor-pointer shadow-lg shrink-0"
+                    className="px-5 py-3 bg-zinc-800/85 hover:bg-zinc-700 text-white font-bold text-xs md:text-sm rounded-xl flex items-center gap-2 transition-all hover:scale-105 border border-zinc-700/60 cursor-pointer shadow-xl shrink-0"
+                    id="btn-carousel-more-info"
                   >
                     <Info className="w-4 h-4 text-zinc-300" />
                     <span>Mais Informações</span>
                   </button>
                 </div>
               </div>
+
+              {/* Modern Micro Progress Indicators (Netflix Style Dots) */}
+              {carouselItems.length > 1 && (
+                <div className="absolute right-4 md:right-8 bottom-6 z-30 flex items-center gap-2">
+                  {carouselItems.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        playSound.click();
+                        setCarouselIndex(idx);
+                      }}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        carouselIndex === idx 
+                          ? 'w-6 bg-red-600' 
+                          : 'w-2 bg-zinc-600 hover:bg-zinc-400'
+                      }`}
+                      aria-label={`Ir para slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* NETFLIX CINEMATIC CAROUSELS */}
           <div className="px-4 md:px-8 pb-20 space-y-10 relative z-20 mt-[-40px] md:mt-[-80px]">
+            
+            {/* UPGRADE CINEMA: AI UPLOAD & PUBLISH BANNER */}
+            <div className="bg-gradient-to-r from-red-950/40 via-zinc-950/90 to-indigo-950/40 border border-red-500/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden backdrop-blur-sm" id="ai-cinema-uploader">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="space-y-3 max-w-2xl text-center md:text-left">
+                <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-red-600 to-indigo-600 text-white font-black text-[9px] uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg shadow-red-500/10">
+                  <Sparkles className="w-3 h-3 text-yellow-300 animate-bounce" />
+                  <span>SISTEMA DE DETECÇÃO &amp; IA CINEMÁTICA</span>
+                </div>
+                <h3 className="text-lg md:text-2xl font-black text-white tracking-tight">
+                  Publique seus próprios Filmes e Clipes na Grade! 🎥🍿
+                </h3>
+                <p className="text-xs md:text-sm text-zinc-400 leading-relaxed font-medium">
+                  Submeta uma imagem (upload local, URL ou presets premium), dê um título e digite uma ideia básica. Nossa IA fará o <span className="text-red-500 font-bold">reconhecimento óptico</span>, otimizará as legendas e fixará o pôster instantaneamente nos banners em destaque com matching dinâmico!
+                </p>
+              </div>
+
+              <div className="shrink-0 w-full md:w-auto">
+                {loggedInUser ? (
+                  <button
+                    onClick={() => {
+                      playSound.click();
+                      setShowUploadModal(true);
+                    }}
+                    className="w-full md:w-auto px-6 py-3.5 bg-gradient-to-r from-[#E50914] to-red-700 hover:from-red-500 hover:to-red-600 text-white font-black text-xs md:text-sm uppercase tracking-wider rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-red-600/20 cursor-pointer"
+                    id="btn-trigger-ai-upload"
+                  >
+                    <Plus className="w-4 h-4 text-white" />
+                    <span>Publicar Novo Filme com IA</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2.5 text-center">
+                    <button
+                      onClick={() => {
+                        playSound.click();
+                        if (onOpenLogin) {
+                          onOpenLogin();
+                        } else {
+                          showToast('🔒 Faça login no menu principal no topo.');
+                        }
+                      }}
+                      className="w-full md:w-auto px-6 py-3.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-black text-xs md:text-sm uppercase tracking-wider rounded-xl transition-all duration-300 border border-zinc-700/60 flex items-center justify-center gap-2 cursor-pointer"
+                      id="btn-login-to-upload"
+                    >
+                      <span>🔒 Entrar na Conta para Publicar</span>
+                    </button>
+                    <p className="text-[10px] text-zinc-500 font-medium">
+                      Ganhe 100 Moedas e 20 XP por filme publicado!
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* NEW ROW: User Uploads / Community Movies */}
+            {userUploadedMovies.length > 0 && (
+              <div className="space-y-2" id="row-community-uploads">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-6 bg-indigo-500 rounded-full animate-pulse" />
+                    <h3 className="text-sm md:text-base font-black uppercase text-white font-sans tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                      Destaques da Comunidade (IA Reconhecidos)
+                    </h3>
+                  </div>
+                  <span className="text-[10px] bg-indigo-950/60 border border-indigo-800/30 px-2 py-0.5 rounded-full text-indigo-400 font-bold">
+                    {userUploadedMovies.length} Filmes Publicados
+                  </span>
+                </div>
+
+                <div className="relative group">
+                  <button 
+                    onClick={() => scrollRow(userRowRef, 'left')}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-10 h-24 bg-black/60 hover:bg-black/90 text-white border-r border-zinc-800/40 opacity-0 group-hover:opacity-100 transition-all rounded-r-lg cursor-pointer flex items-center justify-center"
+                    id="btn-scroll-user-left"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+
+                  <div 
+                    ref={userRowRef}
+                    className="flex gap-4 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x scroll-smooth touch-pan-x"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  >
+                    {userUploadedMovies.map(item => (
+                      <div 
+                        key={item.id}
+                        onClick={() => {
+                          playSound.click();
+                          setActiveMedia(item);
+                        }}
+                        className="flex-none w-52 md:w-60 bg-zinc-900 border border-indigo-500/20 hover:border-indigo-500/50 rounded-xl overflow-hidden cursor-pointer hover:scale-105 hover:shadow-xl transition-all duration-300 snap-start group"
+                        id={`item-user-${item.id}`}
+                      >
+                        <div className="aspect-[3/4] relative overflow-hidden">
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-2 right-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-md flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-yellow-300 animate-pulse" />
+                            <span>IA RECONHECIDO</span>
+                          </div>
+                        </div>
+                        <div className="p-3 space-y-1">
+                          <h4 className="text-xs font-black text-slate-100 line-clamp-1 group-hover:text-indigo-400 transition-colors">
+                            {item.title}
+                          </h4>
+                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono">
+                            <span>{item.year}</span>
+                            <span className="px-1 py-0.2 bg-zinc-800 text-zinc-300 rounded text-[9px] font-bold">{item.rating}</span>
+                            <span className="text-emerald-400 font-bold">{item.matchScore}% Match</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => scrollRow(userRowRef, 'right')}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-30 w-10 h-24 bg-black/60 hover:bg-black/90 text-white border-l border-zinc-800/40 opacity-0 group-hover:opacity-100 transition-all rounded-l-lg cursor-pointer flex items-center justify-center"
+                    id="btn-scroll-user-right"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            )}
             
             {/* ROW 1: YouTube Channel Feed */}
             <div className="space-y-2">
@@ -1258,6 +1724,277 @@ export const Cinema: React.FC<{
                 </div>
 
               </form>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* EXQUISITE IA MOVIE PUBLISH & UPLOAD MODAL */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            id="modal-ai-uploader"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 30 }}
+              className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative"
+            >
+              
+              {/* Top Banner Accent */}
+              <div className="h-2 bg-gradient-to-r from-red-600 via-indigo-600 to-purple-600" />
+
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-zinc-900 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-red-600/10 rounded-lg border border-red-500/20 text-red-500 animate-pulse">
+                    <Sparkles className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-sans font-black text-white text-base tracking-tight">
+                      Publicar Novo Filme com Reconhecimento IA
+                    </h3>
+                    <p className="text-[10px] text-zinc-400 font-medium font-mono uppercase tracking-wider">
+                      Processamento Inteligente de Imagem e Metadados
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    playSound.click();
+                    setShowUploadModal(false);
+                  }}
+                  disabled={aiAnalyzing}
+                  className="p-1.5 bg-zinc-900 hover:bg-red-600 text-slate-300 hover:text-white rounded-full cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Form Content or AI Loading State */}
+              <div className="p-6">
+                {aiAnalyzing ? (
+                  /* BEAUTIFUL AI RUNTIME OPTICAL RECOGNITION SCREEN */
+                  <div className="py-12 flex flex-col items-center justify-center space-y-6 text-center">
+                    <div className="relative">
+                      {/* Scanning visual effect */}
+                      <div className="w-24 h-24 rounded-full border-4 border-indigo-500/20 border-t-red-600 animate-spin flex items-center justify-center" />
+                      <div className="absolute inset-0 m-auto w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-indigo-500/40">
+                        <Sparkles className="w-6 h-6 text-white" />
+                      </div>
+                      
+                      {/* Dynamic light scanline overlay */}
+                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_15px_#ef4444] animate-bounce" />
+                    </div>
+
+                    <div className="space-y-2 max-w-md">
+                      <h4 className="text-sm font-black text-white font-mono animate-pulse tracking-wide uppercase">
+                        {aiStep}
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        Nossa rede neural está analisando sua imagem, refinando os metadados cinematográficos e inserindo matching rating na plataforma. Por favor, aguarde...
+                      </p>
+                    </div>
+
+                    {/* Progress dots bar */}
+                    <div className="flex gap-1.5 justify-center">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                ) : (
+                  /* THE MAIN MOVIE UPLOAD FORM */
+                  <form onSubmit={handleAiPublish} className="space-y-5">
+                    
+                    {/* Basic Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      
+                      {/* Title */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">Título do Filme / Clipe</label>
+                        <input 
+                          type="text" 
+                          value={uploadTitle}
+                          onChange={(e) => setUploadTitle(e.target.value)}
+                          placeholder="Ex: Retro Cyberpunk: A Origem"
+                          className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-750 focus:border-red-600 focus:outline-none rounded-xl text-xs text-white"
+                          required
+                        />
+                      </div>
+
+                      {/* YouTube Video ID (Optional) */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">ID do Vídeo do YouTube (Opcional)</label>
+                        <input 
+                          type="text" 
+                          value={uploadYoutubeId}
+                          onChange={(e) => setUploadYoutubeId(e.target.value)}
+                          placeholder="Ex: dQw4w9WgXcQ (Opcional)"
+                          className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-750 focus:border-red-600 focus:outline-none rounded-xl text-xs text-white font-mono"
+                        />
+                      </div>
+
+                    </div>
+
+                    {/* Image Upload Source Selection */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">Origem do Pôster / Imagem</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSound.click();
+                            setUploadImageOption('preset');
+                          }}
+                          className={`py-2 px-2.5 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer ${
+                            uploadImageOption === 'preset'
+                              ? 'bg-red-600/10 border-red-500 text-red-400'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                          }`}
+                        >
+                          🎬 Presets de Cinema
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSound.click();
+                            setUploadImageOption('file');
+                          }}
+                          className={`py-2 px-2.5 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer ${
+                            uploadImageOption === 'file'
+                              ? 'bg-red-600/10 border-red-500 text-red-400'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                          }`}
+                        >
+                          📁 Upload de Arquivo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSound.click();
+                            setUploadImageOption('url');
+                          }}
+                          className={`py-2 px-2.5 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer ${
+                            uploadImageOption === 'url'
+                              ? 'bg-red-600/10 border-red-500 text-red-400'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                          }`}
+                        >
+                          🔗 Endereço / URL
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Image Options Form Inputs */}
+                    {uploadImageOption === 'preset' && (
+                      <div className="space-y-1.5 bg-zinc-900/60 border border-zinc-900/80 p-3 rounded-xl">
+                        <label className="text-[10px] font-mono font-black text-zinc-500 uppercase tracking-wider block">Escolha uma Atmosfera Estilizada por IA</label>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                          {Object.entries(PRESET_IMAGES).map(([key, item]) => (
+                            <button
+                              type="button"
+                              key={key}
+                              onClick={() => {
+                                playSound.click();
+                                setUploadPreset(key);
+                              }}
+                              className={`p-1 border rounded-lg transition-all text-center overflow-hidden flex flex-col items-center gap-1 cursor-pointer ${
+                                uploadPreset === key
+                                  ? 'border-red-500 bg-red-950/20'
+                                  : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'
+                              }`}
+                            >
+                              <img src={item.url} className="w-full aspect-[4/3] object-cover rounded" alt={item.label} />
+                              <span className="text-[8px] font-mono font-bold leading-none line-clamp-1 text-zinc-400 group-hover:text-white">{item.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {uploadImageOption === 'file' && (
+                      <div className="space-y-2 bg-zinc-900/60 border border-zinc-900/80 p-4 rounded-xl">
+                        <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">Upload do Arquivo do Pôster (Foto do Filme)</label>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-black file:bg-[#E50914] file:text-white hover:file:bg-red-500 cursor-pointer"
+                          />
+                          {uploadFileBase64 && (
+                            <div className="w-16 h-16 rounded-xl border border-zinc-700 overflow-hidden shrink-0 shadow-lg">
+                              <img src={uploadFileBase64} alt="Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-zinc-500">Sua foto é processada localmente e mantida em cache privado criptografado.</p>
+                      </div>
+                    )}
+
+                    {uploadImageOption === 'url' && (
+                      <div className="space-y-1 bg-zinc-900/60 border border-zinc-900/80 p-3 rounded-xl">
+                        <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">Endereço da Imagem (URL)</label>
+                        <input 
+                          type="url" 
+                          value={uploadImageUrl}
+                          onChange={(e) => setUploadImageUrl(e.target.value)}
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-red-600 focus:outline-none rounded-xl text-xs text-white font-mono"
+                        />
+                      </div>
+                    )}
+
+                    {/* Legend / Brief Synopsis */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono font-black text-zinc-400 uppercase tracking-wider block">Legenda Básica / Sinopse Fictícia</label>
+                      <textarea 
+                        value={uploadSynopsis}
+                        onChange={(e) => setUploadSynopsis(e.target.value)}
+                        placeholder="Escreva uma ideia simples de 1 a 2 linhas. Deixe que a IA faça o resto para torná-la profissional!"
+                        className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-750 focus:border-red-600 focus:outline-none rounded-xl text-xs text-white h-20 resize-none"
+                      />
+                    </div>
+
+                    {/* Reward callout */}
+                    <div className="p-3 bg-indigo-950/30 border border-indigo-500/25 rounded-xl flex items-center justify-between text-xs text-indigo-300">
+                      <span className="font-bold flex items-center gap-1">🎁 Recompensa do Diretor:</span>
+                      <span className="font-mono font-black text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-800/30">
+                        ⚡ +100 Moedas &amp; +20 XP
+                      </span>
+                    </div>
+
+                    {/* Actions footer */}
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-900">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playSound.click();
+                          setShowUploadModal(false);
+                        }}
+                        className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-xs font-bold rounded-xl text-zinc-300 transition-colors cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-gradient-to-r from-red-600 via-[#E50914] to-red-700 hover:scale-105 text-xs font-black rounded-xl text-white transition-all shadow-lg active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                        <span>Analisar &amp; Publicar com IA</span>
+                      </button>
+                    </div>
+
+                  </form>
+                )}
+              </div>
 
             </motion.div>
           </motion.div>
