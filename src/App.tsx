@@ -8,6 +8,8 @@ import { TransactionLogs } from './components/TransactionLogs';
 import { CheckoutModal } from './components/CheckoutModal';
 import { WithdrawSection } from './components/WithdrawSection';
 import { GoogleDriveSyncBar } from './components/GoogleDriveSyncBar';
+import { FootballBets } from './components/FootballBets';
+import { Cinema } from './components/Cinema';
 import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
@@ -16,8 +18,8 @@ import { AuthModal, AppUser } from './components/AuthModal';
 import { googleSignOut } from './utils/googleDriveDb';
 
 export default function App() {
-  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football'
-  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football'>('games');
+  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema'
+  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football' | 'cinema'>('games');
 
   // User Authentication States
   const [loggedInUser, setLoggedInUser] = useState<AppUser | null>(() => {
@@ -439,6 +441,14 @@ export default function App() {
             openShop={() => setActiveTab('shop')}
           />
         )}
+
+        {activeTab === 'cinema' && (
+          <Cinema
+            stats={stats}
+            updateStats={updateStats}
+            addLog={addLog}
+          />
+        )}
       </main>
 
       {/* Integrated secure checkout modal overlay */}
@@ -462,16 +472,47 @@ export default function App() {
       )}
 
       {/* Global persistent Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800/80 py-5 text-center text-xs text-slate-500 mt-auto font-mono">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 GameZone. Contato &amp; Suporte: <a href="mailto:tiagojorgeengenheiro@gmail.com" className="text-indigo-400 hover:underline select-all font-sans font-medium">tiagojorgeengenheiro@gmail.com</a></p>
-          <div className="flex items-center gap-4 text-[10px]">
-            <span>Segurança Certificada SSL</span>
-            <span>•</span>
-            <span>PCI-DSS Nível 1</span>
-            <span>•</span>
-            <span>Pix Banco Central</span>
+      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-xs text-slate-500 mt-auto font-sans">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-6">
+          
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-900">
+            {/* Logo and support */}
+            <div className="text-center md:text-left space-y-1.5">
+              <div className="text-sm font-black text-white tracking-wider font-mono">
+                🚀 GAME<span className="text-indigo-400">ZONE</span> ARCADE &amp; CINE
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Sua plataforma integrada de entretenimento virtual premium e streaming.
+              </p>
+            </div>
+
+            {/* Quick links */}
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-slate-400 font-medium">
+              <button onClick={() => setActiveTab('games')} className="hover:text-indigo-400 transition-colors cursor-pointer">Arcade</button>
+              <button onClick={() => setActiveTab('cinema')} className="hover:text-red-500 transition-colors cursor-pointer">Sessão Cinema</button>
+              <button onClick={() => setActiveTab('football')} className="hover:text-emerald-400 transition-colors cursor-pointer">Futebol</button>
+              <button onClick={() => setActiveTab('shop')} className="hover:text-purple-400 transition-colors cursor-pointer">Loja VIP</button>
+              <button onClick={() => setActiveTab('saque')} className="hover:text-amber-400 transition-colors cursor-pointer">Saques</button>
+            </div>
           </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1 text-[11px] text-slate-500 font-mono">
+            {/* Contact and copyright */}
+            <div className="text-center sm:text-left space-y-1">
+              <p>© 2026 GameZone Inc. Todos os direitos reservados.</p>
+              <p>Contato &amp; Suporte: <a href="mailto:tiagojorgeengenheiro@gmail.com" className="text-indigo-400 hover:text-indigo-300 transition-colors underline select-all font-sans font-medium">tiagojorgeengenheiro@gmail.com</a></p>
+            </div>
+
+            {/* Security badges */}
+            <div className="flex flex-wrap items-center justify-center gap-3 bg-slate-900/40 border border-slate-900/60 px-3 py-1.5 rounded-xl text-[10px] text-slate-400">
+              <span className="flex items-center gap-1">🔒 SSL Criptografado</span>
+              <span className="text-slate-700">•</span>
+              <span>🛡️ PCI-DSS Nível 1</span>
+              <span className="text-slate-700">•</span>
+              <span className="text-emerald-400 font-bold">⚡ Pix Instantâneo BC</span>
+            </div>
+          </div>
+
         </div>
       </footer>
     </div>
