@@ -16,8 +16,8 @@ import { AuthModal, AppUser } from './components/AuthModal';
 import { googleSignOut } from './utils/googleDriveDb';
 
 export default function App() {
-  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque'
-  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque'>('games');
+  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football'
+  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football'>('games');
 
   // User Authentication States
   const [loggedInUser, setLoggedInUser] = useState<AppUser | null>(() => {
@@ -385,7 +385,22 @@ export default function App() {
             setRealBalance={setRealBalance}
             withdrawLimit={withdrawLimit}
             setWithdrawLimit={setWithdrawLimit}
+            setActiveTab={setActiveTab}
           />
+        )}
+
+        {activeTab === 'football' && (
+          <div className="p-3 md:p-6 max-w-5xl mx-auto">
+            <FootballBets
+              stats={stats}
+              updateStats={updateStats}
+              addLog={addLog}
+              realBalance={realBalance}
+              setRealBalance={setRealBalance}
+              withdrawLimit={withdrawLimit}
+              setWithdrawLimit={setWithdrawLimit}
+            />
+          </div>
         )}
 
         {activeTab === 'avatar' && (

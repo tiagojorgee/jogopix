@@ -27,8 +27,8 @@ import { AppUser } from './AuthModal';
 
 interface HeaderProps {
   stats: PlayerStats;
-  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque';
-  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque') => void;
+  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football';
+  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football') => void;
   openCheckoutForQuickBuy: (itemId: string) => void;
   realBalance?: number;
   loggedInUser: AppUser | null;
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque') => {
+  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football') => {
     setActiveTab(tab);
     playSound.click();
   };
@@ -392,6 +392,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Swords className="w-3.5 h-3.5 text-indigo-400" />
           Jogar Arcade
+        </button>
+        <button
+          onClick={() => handleTabClick('football')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+            activeTab === 'football'
+              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border border-emerald-500/30 shadow-lg shadow-emerald-600/15 scale-[1.02]'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+          }`}
+          id="tab-football"
+        >
+          <Trophy className="w-3.5 h-3.5 text-emerald-400" />
+          Palpites de Futebol
         </button>
         <button
           onClick={() => handleTabClick('avatar')}

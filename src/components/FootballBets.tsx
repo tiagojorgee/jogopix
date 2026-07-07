@@ -38,6 +38,14 @@ interface Bet {
   teamsLabel: string;
   isCustom?: boolean;
   rewardClaimedDesc?: string;
+  isMulti?: boolean;
+  predictions?: {
+    matchId: string;
+    teamsLabel: string;
+    homePredict: number;
+    awayPredict: number;
+    status?: 'PENDENTE' | 'VENCEU_EXATO' | 'VENCEU_VENCEDOR' | 'PERDEU';
+  }[];
 }
 
 interface FootballBetsProps {
@@ -152,6 +160,16 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
   const [awayPredict, setAwayPredict] = useState<number>(1);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('pix');
+
+  // Upgraded Multi-bet systems
+  const [betMode, setBetMode] = useState<'simples' | 'multipla'>('simples');
+  const [selectedMatchIds, setSelectedMatchIds] = useState<string[]>(['match-1']);
+  const [predictionsMap, setPredictionsMap] = useState<Record<string, { home: number; away: number }>>({
+    'match-1': { home: 2, away: 1 },
+    'match-2': { home: 1, away: 0 },
+    'match-3': { home: 2, away: 2 },
+    'match-4': { home: 0, away: 0 }
+  });
 
   // Checkout Payment Modal Simulation
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
@@ -278,6 +296,61 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
       const updated = prevBets.map((bet) => {
         if (bet.status !== 'PENDENTE') return bet;
 
+        // Multi-bet evaluation
+        if (bet.isMulti && bet.predictions) {
+          const allFinished = bet.predictions.every((pred) => {
+            const m = matches.find((x) => x.id === pred.matchId);
+            return m && m.status === 'ENCERRADO';
+          });
+
+          if (!allFinished) return bet;
+
+          isUpdated = true;
+          let hasLoss = false;
+          let allExact = true;
+
+          const updatedPredictions = bet.predictions.map((pred) => {
+            const m = matches.find((x) => x.id === pred.matchId);
+            if (!m) {
+              hasLoss = true;
+              allExact = false;
+              return { ...pred, status: 'PERDEU' as const };
+            }
+
+            const realH = m.homeScore;
+            const realA = m.awayScore;
+            const guessedExact = pred.homePredict === realH && pred.awayPredict === realA;
+            const realWinner = realH > realA ? 'home' : (realH < realA ? 'away' : 'draw');
+            const guessWinner = pred.homePredict > pred.awayPredict ? 'home' : (pred.homePredict < pred.awayPredict ? 'away' : 'draw');
+            const guessedWinner = realWinner === guessWinner;
+
+            let predStatus: 'VENCEU_EXATO' | 'VENCEU_VENCEDOR' | 'PERDEU' = 'PERDEU';
+            if (guessedExact) {
+              predStatus = 'VENCEU_EXATO';
+            } else if (guessedWinner) {
+              predStatus = 'VENCEU_VENCEDOR';
+              allExact = false;
+            } else {
+              hasLoss = true;
+              allExact = false;
+            }
+
+            return { ...pred, status: predStatus };
+          });
+
+          let finalStatus: 'VENCEU_EXATO' | 'VENCEU_VENCEDOR' | 'PERDEU' = 'PERDEU';
+          if (!hasLoss) {
+            finalStatus = allExact ? 'VENCEU_EXATO' : 'VENCEU_VENCEDOR';
+          }
+
+          return {
+            ...bet,
+            predictions: updatedPredictions,
+            status: finalStatus
+          };
+        }
+
+        // Standard single bet evaluation
         const match = matches.find((m) => m.id === bet.matchId);
         if (!match || match.status !== 'ENCERRADO') return bet;
 
@@ -394,29 +467,70 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
       return;
     }
     playSound.click();
+
+    const isMulti = betMode === 'multipla' && selectedMatchIds.length > 1;
+    const finalPrice = isMulti ? parseFloat((betAmount * 1.2).toFixed(2)) : betAmount;
     
     // Set checkout action
     setCheckoutCallback(() => () => {
-      const match = matches.find((m) => m.id === selectedMatchId);
-      if (!match) return;
+      if (isMulti) {
+        // Prepare multiple predictions
+        const predictions = selectedMatchIds.map((mId) => {
+          const m = matches.find((x) => x.id === mId);
+          const pred = predictionsMap[mId] || { home: 2, away: 1 };
+          return {
+            matchId: mId,
+            teamsLabel: m ? `${m.homeFlag} ${m.homeTeam} vs ${m.awayTeam} ${m.awayFlag}` : 'Jogo Desconhecido',
+            homePredict: pred.home,
+            awayPredict: pred.away,
+            status: 'PENDENTE' as const
+          };
+        });
 
-      const betId = `BET-${Math.floor(100000 + Math.random() * 900000)}`;
-      const newBet: Bet = {
-        id: betId,
-        matchId: selectedMatchId,
-        homePredict,
-        awayPredict,
-        wager: betAmount,
-        paymentMethod,
-        timestamp: new Date().toLocaleString('pt-BR'),
-        status: 'PENDENTE',
-        claimed: false,
-        teamsLabel: `${match.homeFlag} ${match.homeTeam} vs ${match.awayTeam} ${match.awayFlag}`
-      };
+        const betId = `BET-${Math.floor(100000 + Math.random() * 900000)}`;
+        const newBet: Bet = {
+          id: betId,
+          matchId: 'multi',
+          homePredict: 0,
+          awayPredict: 0,
+          wager: finalPrice,
+          paymentMethod,
+          timestamp: new Date().toLocaleString('pt-BR'),
+          status: 'PENDENTE',
+          claimed: false,
+          teamsLabel: `Múltipla (${selectedMatchIds.length} Jogos) 📈`,
+          isMulti: true,
+          predictions
+        };
 
-      setBets((prev) => [newBet, ...prev]);
-      addLog('purchase_booster', `Palpite Registrado: ${match.homeTeam} ${homePredict}x${awayPredict} ${match.awayTeam}`, betAmount, 'real');
-      setWithdrawLimit((prev) => prev + betAmount);
+        setBets((prev) => [newBet, ...prev]);
+        addLog('purchase_booster', `Aposta Múltipla Registrada: Combo com ${selectedMatchIds.length} palpites`, finalPrice, 'real');
+        setWithdrawLimit((prev) => prev + finalPrice);
+      } else {
+        // Single prediction
+        const mId = selectedMatchIds[0] || selectedMatchId;
+        const match = matches.find((m) => m.id === mId);
+        if (!match) return;
+
+        const pred = predictionsMap[mId] || { home: homePredict, away: awayPredict };
+        const betId = `BET-${Math.floor(100000 + Math.random() * 900000)}`;
+        const newBet: Bet = {
+          id: betId,
+          matchId: mId,
+          homePredict: pred.home,
+          awayPredict: pred.away,
+          wager: finalPrice,
+          paymentMethod,
+          timestamp: new Date().toLocaleString('pt-BR'),
+          status: 'PENDENTE',
+          claimed: false,
+          teamsLabel: `${match.homeFlag} ${match.homeTeam} vs ${match.awayTeam} ${match.awayFlag}`
+        };
+
+        setBets((prev) => [newBet, ...prev]);
+        addLog('purchase_booster', `Palpite Registrado: ${match.homeTeam} ${pred.home}x${pred.away} ${match.awayTeam}`, finalPrice, 'real');
+        setWithdrawLimit((prev) => prev + finalPrice);
+      }
     });
 
     setShowPayModal(true);
@@ -634,9 +748,10 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
 
     // Scale rewards dynamically with the wager value!
     if (bet.status === 'VENCEU_EXATO') {
-      livesReward = Math.max(5, Math.round(bet.wager * 2.5));
-      pointsReward = Math.max(150, Math.round(bet.wager * 25));
-      coinsReward = Math.max(200, Math.round(bet.wager * 30));
+      const scale = bet.isMulti ? 2.0 : 1.0;
+      livesReward = Math.max(5, Math.round(bet.wager * 2.5 * scale));
+      pointsReward = Math.max(150, Math.round(bet.wager * 25 * scale));
+      coinsReward = Math.max(200, Math.round(bet.wager * 30 * scale));
       
       // Unlock premium shop objects!
       updateStats((prev) => {
@@ -650,12 +765,17 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
           unlockedAccessories: accessories
         };
       });
-      unlockedDesc = '🏆 PLACAR EXATO! Desbloqueou Manto Sagrado da Seleção (Skin) e Chuteira Lendária (Acessório)! ';
+      unlockedDesc = bet.isMulti 
+        ? '🏆 COMBO DE PLACAR EXATO! Desbloqueou Manto Sagrado da Seleção, Chuteira Lendária e bônus gigante! '
+        : '🏆 PLACAR EXATO! Desbloqueou Manto Sagrado da Seleção (Skin) e Chuteira Lendária (Acessório)! ';
     } else {
-      livesReward = Math.max(2, Math.round(bet.wager * 1.2));
-      pointsReward = Math.max(50, Math.round(bet.wager * 10));
-      coinsReward = Math.max(55, Math.round(bet.wager * 12));
-      unlockedDesc = '⚽ ACERTOU O VENDEDOR! Prêmio de Consolação! ';
+      const scale = bet.isMulti ? 1.4 : 1.0;
+      livesReward = Math.max(2, Math.round(bet.wager * 1.2 * scale));
+      pointsReward = Math.max(50, Math.round(bet.wager * 10 * scale));
+      coinsReward = Math.max(55, Math.round(bet.wager * 12 * scale));
+      unlockedDesc = bet.isMulti
+        ? '⚽ COMBO DE VENCEDOR ACERTADO! Prêmio especial de múltipla! '
+        : '⚽ ACERTOU O VENDEDOR! Prêmio de Consolação! ';
     }
 
     // Apply inside-the-game prizes directly
@@ -675,26 +795,29 @@ export const FootballBets: React.FC<FootballBetsProps> = ({
   };
 
   // Estimate rewards for display
-  const estimateRewards = (wager: number, isExact: boolean) => {
+  const estimateRewards = (wager: number, isExact: boolean, isMulti = false) => {
+    const scale = isMulti ? (isExact ? 2.0 : 1.4) : 1.0;
     if (isExact) {
       return {
-        lives: Math.max(5, Math.round(wager * 2.5)),
-        points: Math.max(150, Math.round(wager * 25)),
-        coins: Math.max(200, Math.round(wager * 30)),
+        lives: Math.max(5, Math.round(wager * 2.5 * scale)),
+        points: Math.max(150, Math.round(wager * 25 * scale)),
+        coins: Math.max(200, Math.round(wager * 30 * scale)),
         items: 'Manto Sagrado + Chuteira de Ouro'
       };
     } else {
       return {
-        lives: Math.max(2, Math.round(wager * 1.2)),
-        points: Math.max(50, Math.round(wager * 10)),
-        coins: Math.max(55, Math.round(wager * 12)),
+        lives: Math.max(2, Math.round(wager * 1.2 * scale)),
+        points: Math.max(50, Math.round(wager * 10 * scale)),
+        coins: Math.max(55, Math.round(wager * 12 * scale)),
         items: 'Moedas Adicionais'
       };
     }
   };
 
-  const estimatedExact = estimateRewards(activeTab === 'create_custom' ? customWager : betAmount, true);
-  const estimatedWinner = estimateRewards(activeTab === 'create_custom' ? customWager : betAmount, false);
+  const isMultiActive = betMode === 'multipla' && selectedMatchIds.length > 1;
+  const currentWagerValue = activeTab === 'create_custom' ? customWager : betAmount;
+  const estimatedExact = estimateRewards(currentWagerValue, true, isMultiActive);
+  const estimatedWinner = estimateRewards(currentWagerValue, false, isMultiActive);
 
   return (
     <div className="bg-slate-900/60 border border-emerald-500/20 rounded-3xl p-4 md:p-6 space-y-6 backdrop-blur-xl relative overflow-hidden" id="palpites-futebol-jogue-ganhe-portal">

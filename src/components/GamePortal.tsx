@@ -22,6 +22,7 @@ interface GamePortalProps {
   setRealBalance: React.Dispatch<React.SetStateAction<number>>;
   withdrawLimit: number;
   setWithdrawLimit: React.Dispatch<React.SetStateAction<number>>;
+  setActiveTab?: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'saque' | 'football') => void;
 }
 
 export const GamePortal: React.FC<GamePortalProps> = ({
@@ -35,7 +36,8 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   realBalance,
   setRealBalance,
   withdrawLimit,
-  setWithdrawLimit
+  setWithdrawLimit,
+  setActiveTab
 }) => {
   const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator' | null>(null);
 
@@ -176,17 +178,6 @@ export const GamePortal: React.FC<GamePortalProps> = ({
         </div>
       </div>
 
-      {/* Real-time Football World Cup & Copa do Brasil Live Score and Betting Board */}
-      <FootballBets
-        stats={stats}
-        updateStats={updateStats}
-        addLog={addLog}
-        realBalance={realBalance}
-        setRealBalance={setRealBalance}
-        withdrawLimit={withdrawLimit}
-        setWithdrawLimit={setWithdrawLimit}
-      />
-
       {/* Bento Grid: Game cards list */}
       <div className="space-y-4">
         <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 font-mono flex items-center gap-2">
@@ -196,7 +187,45 @@ export const GamePortal: React.FC<GamePortalProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Card 1: Pixel Jumper */}
+          {/* Card 1: Palpites de Futebol */}
+          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-emerald-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm md:col-span-2">
+            <div className="p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-emerald-550/10 rounded-xl border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all duration-300">
+                  <Trophy className="w-6 h-6 text-emerald-400" />
+                </div>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-300 bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-800/25">
+                  ESTÁDIO DE IA: COPA DO MUNDO, COPA DO BRASIL E PRINCIPAIS JOGOS
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">
+                  ⚽ Palpites futebol jogue e ganhe!
+                </h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Dê palpites em tempo real nos principais confrontos mundiais e nacionais ou inicie sua própria partida customizada no estádio virtual. Aposte quanto quiser a partir de R$ 1,00, faça combos de múltiplos palpites (+20% taxa) e fature vidas extras, pontos e itens lendários para seu piloto!
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
+              <div className="text-[10px] text-slate-500 font-mono">
+                Apostas em tempo real a partir de: <strong className="text-emerald-400">R$ 1,00</strong>
+              </div>
+              <button
+                onClick={() => {
+                  playSound.click();
+                  if (setActiveTab) setActiveTab('football');
+                }}
+                className="flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/15 hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                id="btn-nav-football"
+              >
+                <Trophy className="w-4 h-4" /> Acessar Portal de Futebol
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Pixel Jumper */}
           <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-indigo-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between">
