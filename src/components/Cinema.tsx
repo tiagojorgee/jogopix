@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
 import { getCleanUserId, addMovie, getMovies } from '../utils/firebaseDb';
+import { VideoPlayer } from './VideoPlayer';
 
 // Fictitious movie and series posters list
 interface MediaItem {
@@ -90,6 +91,8 @@ export const Cinema: React.FC<{
         duration: '1h 48min',
         matchScore: 98,
         imageUrl: 'https://images.unsplash.com/photo-1601513525393-8393e5518e31?q=80&w=400',
+        youtubeId: 'f7M-I6P2U-Q',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         tags: ['AI-Optimized', 'Cyberpunk', 'Gamer', 'Justiça']
       },
       {
@@ -102,6 +105,8 @@ export const Cinema: React.FC<{
         duration: '1h 15min',
         matchScore: 94,
         imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400',
+        youtubeId: 'Ld_A3g-1G10',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         tags: ['História', 'Tecnologia', 'Salvação', 'Nostalgia']
       }
     ];
@@ -253,6 +258,8 @@ export const Cinema: React.FC<{
       duration: '8 Episódios',
       matchScore: 99,
       imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=400',
+      youtubeId: 'f7M-I6P2U-Q',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       tags: ['Suspense', 'Sci-Fi', 'Geek', 'Exclusivo']
     },
     {
@@ -265,6 +272,8 @@ export const Cinema: React.FC<{
       duration: '1 Temporada',
       matchScore: 97,
       imageUrl: 'https://images.unsplash.com/photo-1563013544-824ae1d704d3?q=80&w=400',
+      youtubeId: 'Ld_A3g-1G10',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
       tags: ['Ação', 'Drama', 'Finanças', 'Cibernético']
     },
     {
@@ -277,6 +286,8 @@ export const Cinema: React.FC<{
       duration: 'Film',
       matchScore: 93,
       imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=400',
+      youtubeId: 'dQw4w9WgXcQ',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       tags: ['Aventura', 'Sobrevivência', 'Superação']
     },
     {
@@ -289,6 +300,8 @@ export const Cinema: React.FC<{
       duration: '6 Episódios',
       matchScore: 96,
       imageUrl: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?q=80&w=400',
+      youtubeId: '9p2gBOfX-n8',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
       tags: ['Thriller', 'Aposta', 'Mistério', 'Sombrio']
     }
   ];
@@ -305,6 +318,8 @@ export const Cinema: React.FC<{
       duration: '2h 10min',
       matchScore: 95,
       imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400',
+      youtubeId: 'Ld_A3g-1G10',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
       tags: ['Assalto', 'Intriga', 'Ação', 'Veloz']
     },
     {
@@ -317,6 +332,8 @@ export const Cinema: React.FC<{
       duration: '1h 55min',
       matchScore: 98,
       imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=400',
+      youtubeId: '9p2gBOfX-n8',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       tags: ['Drama', 'Estratégia', 'Futebol', 'Matemática']
     },
     {
@@ -329,6 +346,8 @@ export const Cinema: React.FC<{
       duration: '2h 05min',
       matchScore: 92,
       imageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=400',
+      youtubeId: 'f7M-I6P2U-Q',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       tags: ['Artes Marciais', 'Magia', 'Tigre', 'Mítico']
     },
     {
@@ -341,6 +360,8 @@ export const Cinema: React.FC<{
       duration: '1h 48min',
       matchScore: 91,
       imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400',
+      youtubeId: 'dQw4w9WgXcQ',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       tags: ['Comédia', 'Ficção Científica', 'Família']
     }
   ];
@@ -357,6 +378,8 @@ export const Cinema: React.FC<{
       duration: '1h 30min',
       matchScore: 89,
       imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400',
+      youtubeId: 'Ld_A3g-1G10',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       tags: ['Documentário', 'História', 'Games', 'Nostalgia']
     },
     {
@@ -369,6 +392,8 @@ export const Cinema: React.FC<{
       duration: '1h 45min',
       matchScore: 96,
       imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400',
+      youtubeId: '9p2gBOfX-n8',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
       tags: ['Documentário', 'Esports', 'LoL', 'Superação']
     }
   ];
@@ -1412,17 +1437,11 @@ export const Cinema: React.FC<{
 
               {/* Top Media Area: Video Player or Banner preview */}
               <div className="aspect-[16/9] w-full bg-black relative">
-                {isPlaying && activeMedia.youtubeId ? (
-                  // REAL PLAYABLE YOUTUBE EMBED PLAYER
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={`https://www.youtube.com/embed/${activeMedia.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&modestbranding=1&rel=0`} 
-                    title={activeMedia.title}
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowFullScreen
-                    className="w-full h-full"
+                {isPlaying ? (
+                  // REAL PLAYABLE VIDEO PLAYER
+                  <VideoPlayer 
+                    media={activeMedia} 
+                    onClose={() => setIsPlaying(false)}
                   />
                 ) : (
                   // BEAUTIFUL CARD COVER PREVIEW
@@ -1439,11 +1458,7 @@ export const Cinema: React.FC<{
                       <button 
                         onClick={() => {
                           playSound.click();
-                          if (activeMedia.youtubeId) {
-                            setIsPlaying(true);
-                          } else {
-                            showToast('🔴 Reprodução de vídeo em modo de simulação.');
-                          }
+                          setIsPlaying(true);
                         }}
                         className="p-5 md:p-6 bg-[#E50914] hover:bg-red-500 text-white rounded-full flex items-center justify-center hover:scale-110 shadow-2xl transition-transform animate-pulse cursor-pointer"
                         title="Play"
@@ -1451,30 +1466,7 @@ export const Cinema: React.FC<{
                         <Play className="w-8 h-8 fill-white translate-x-0.5" />
                       </button>
                     </div>
-
-                    {/* Simulation disclaimer if not a Youtube clip */}
-                    {!activeMedia.youtubeId && (
-                      <div className="absolute bottom-4 left-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 max-w-sm">
-                        <p className="text-[10px] text-yellow-400 font-bold flex items-center gap-1 leading-tight">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          Filme fictício original GameZone. Reprodução exclusiva em simulação.
-                        </p>
-                      </div>
-                    )}
                   </>
-                )}
-
-                {/* Sound toggle overlays */}
-                {isPlaying && activeMedia.youtubeId && (
-                  <button 
-                    onClick={() => {
-                      playSound.click();
-                      setIsMuted(!isMuted);
-                    }}
-                    className="absolute bottom-4 right-4 bg-black/80 hover:bg-zinc-800 p-2 rounded-full text-white cursor-pointer border border-zinc-700/60 z-30"
-                  >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
                 )}
               </div>
 

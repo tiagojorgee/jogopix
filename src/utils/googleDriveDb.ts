@@ -88,7 +88,11 @@ export const facebookSignIn = async (): Promise<{ user: User } | null> => {
     notifyListeners();
     return { user: result.user };
   } catch (error: any) {
-    console.error('Erro de Login Facebook:', error);
+    if (error?.code === 'auth/operation-not-allowed' || error?.message?.includes('operation-not-allowed')) {
+      console.warn('Facebook Login Provider is not enabled in Firebase Console. Falling back to sandbox simulation.', error);
+    } else {
+      console.error('Erro de Login Facebook:', error);
+    }
     throw error;
   }
 };

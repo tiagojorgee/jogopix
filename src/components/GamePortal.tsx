@@ -6,7 +6,7 @@ import { TigerGame } from './TigerGame';
 import { AviatorGame } from './AviatorGame';
 import { FootballBets } from './FootballBets';
 import { playSound } from '../utils/audio';
-import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle, Star, Sparkles, Flame, Plane } from 'lucide-react';
+import { Swords, Zap, Trophy, Heart, Coins, ArrowRight, ShieldCheck, PlayCircle, Star, Sparkles, Flame, Plane, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AdBanner } from './AdBanner';
 import { AppUser } from './AuthModal';
 
@@ -40,6 +40,8 @@ export const GamePortal: React.FC<GamePortalProps> = ({
   setActiveTab
 }) => {
   const [activeGame, setActiveGame] = useState<'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator' | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'action' | 'luck'>('all');
 
   const handlePlayGame = (gameId: 'jumper' | 'clicker' | 'roulette' | 'tiger' | 'aviator') => {
     if (!loggedInUser) {
@@ -133,272 +135,447 @@ export const GamePortal: React.FC<GamePortalProps> = ({
     );
   }
 
+  // Carousel Slides Definitions
+  const carouselSlides = [
+    {
+      id: 'tiger' as const,
+      title: 'Fortune Tiger VIP 🐯',
+      description: 'O caça-níquel de maior conversão do país! Alinhe envelopes da sorte, pata de ouro e fogos na grade 3x3 para multiplicar seus ganhos em até 20 vezes instantaneamente.',
+      badge: 'Multiplicadores até 20x',
+      cost: 'Sua Aposta',
+      color: 'from-amber-500 to-yellow-600',
+      textAccent: 'text-amber-600 bg-amber-50 border-amber-100',
+      bgGraphic: 'bg-amber-500/10',
+      actionText: 'Soltar o Tigre'
+    },
+    {
+      id: 'aviator' as const,
+      title: 'Aviator Crash Real-Time ✈️',
+      description: 'Decole o aviãozinho multiplicador e decida quando sacar seu saldo acumulado. Acelere seus ganhos antes que o avião decole longe do radar!',
+      badge: 'Decolagem Instantânea',
+      cost: 'Sua Aposta',
+      color: 'from-rose-500 to-red-600',
+      textAccent: 'text-rose-600 bg-rose-50 border-rose-100',
+      bgGraphic: 'bg-rose-500/10',
+      actionText: 'Decolar Saldo'
+    },
+    {
+      id: 'football' as const,
+      title: 'Palpites de Futebol Ao Vivo ⚽',
+      description: 'Dê palpites nos principais confrontos mundiais e nacionais ou inicie partidas customizadas no estádio virtual a partir de R$ 1,00 para faturar vidas extras!',
+      badge: 'Copa do Mundo & Brasil',
+      cost: 'Mínimo R$ 1,00',
+      color: 'from-emerald-500 to-teal-600',
+      textAccent: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+      bgGraphic: 'bg-emerald-500/10',
+      actionText: 'Dar Palpites'
+    }
+  ];
+
+  const nextSlide = () => {
+    playSound.click();
+    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+  };
+
+  const prevSlide = () => {
+    playSound.click();
+    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+  };
+
+  const activeSlide = carouselSlides[currentSlide];
+
   return (
-    <div className="p-3 md:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-3 md:p-6 max-w-5xl mx-auto space-y-7 animate-fadeIn">
       
       {/* Hero Welcome Banner */}
-      <div className="relative bg-gradient-to-br from-slate-900/80 via-indigo-950/30 to-purple-950/40 border border-indigo-500/15 rounded-2xl p-5 md:p-8 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-md">
-        {/* Tech decorative curves */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none animate-pulse duration-[8s]" />
-        <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-purple-500/5 rounded-full filter blur-2xl pointer-events-none" />
+      <div className="relative bg-white border border-slate-100 rounded-3xl p-5 md:p-8 overflow-hidden shadow-xl shadow-slate-200/40 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Soft light decorative glows */}
+        <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-200/20 rounded-full filter blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-72 h-72 bg-purple-200/15 rounded-full filter blur-2xl pointer-events-none" />
         
         <div className="space-y-3 relative z-10 text-center md:text-left max-w-lg">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-400 text-[10px] md:text-xs font-black font-mono rounded-full border border-indigo-500/20">
-            <Zap className="w-3.5 h-3.5 text-indigo-400 animate-bounce" /> ARENA ARCADE ATIVA
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] md:text-xs font-black font-mono rounded-full border border-indigo-100">
+            <Zap className="w-3.5 h-3.5 text-indigo-500 animate-bounce" /> ARENA ARCADE ATIVA
           </span>
-          <h2 className="text-xl md:text-3xl font-black text-white leading-tight font-sans tracking-tight">
+          <h2 className="text-xl md:text-3xl font-black text-slate-800 leading-tight tracking-tight">
             Entre na Arena, Supere as Etapas e Colecione Troféus!
           </h2>
-          <p className="text-slate-400 text-xs md:text-sm leading-relaxed">
+          <p className="text-slate-500 text-xs md:text-sm leading-relaxed">
             Seu personagem customizado participa ativamente de todos os jogos do portal. Ganhe moedas de ouro batendo recordes de pontuação!
           </p>
         </div>
 
-        {/* Quick metrics visual */}
-        <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-900 flex flex-col gap-2 min-w-[200px] text-xs font-mono text-slate-300 relative z-10 w-full md:w-auto">
-          <div className="text-[10px] text-slate-500 uppercase tracking-widest text-center border-b border-slate-900 pb-1.5 mb-1 font-bold">
+        {/* Quick metrics visual with real glassmorphism feel */}
+        <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-150 flex flex-col gap-2 min-w-[220px] text-xs font-mono text-slate-600 relative z-10 w-full md:w-auto shadow-sm shadow-slate-100">
+          <div className="text-[10px] text-slate-400 uppercase tracking-widest text-center border-b border-slate-200 pb-1.5 mb-1 font-bold">
             Status do Piloto
           </div>
           <div className="flex justify-between">
             <span>❤️ Vidas Restantes:</span>
-            <span className="text-white font-bold">{stats.lives}</span>
+            <span className="text-rose-600 font-extrabold">{stats.lives}</span>
           </div>
           <div className="flex justify-between">
             <span>🪙 Moedas do Jogo:</span>
-            <span className="text-amber-400 font-bold">{stats.coins}</span>
+            <span className="text-amber-600 font-extrabold">{stats.coins}</span>
           </div>
           <div className="flex justify-between">
             <span>⏩ Fase Atual:</span>
-            <span className="text-indigo-400 font-bold">Nível {stats.currentStage}</span>
+            <span className="text-indigo-600 font-extrabold">Nível {stats.currentStage}</span>
           </div>
           <div className="flex justify-between">
             <span>🚀 Skips de Fase:</span>
-            <span className="text-purple-400 font-bold">{stageSkipsOwned}</span>
+            <span className="text-purple-600 font-extrabold">{stageSkipsOwned}</span>
           </div>
         </div>
       </div>
 
-      {/* Bento Grid: Game cards list */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 font-mono flex items-center gap-2">
-          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
-          Minijogos da Arena
+      {/* STUNNING SLIDES CAROUSEL (Destaques da Arena) */}
+      <div className="space-y-3.5">
+        <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 font-mono flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+          Destaques em Foco
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="relative bg-gradient-to-tr from-slate-900 via-indigo-950 to-purple-950 text-white rounded-3xl p-6 md:p-8 overflow-hidden shadow-2xl transition-all duration-500 min-h-[220px] flex flex-col justify-between group">
+          {/* Active Graphic Glow */}
+          <div className="absolute right-0 top-0 w-96 h-full bg-radial-gradient from-indigo-500/10 to-transparent filter blur-3xl pointer-events-none" />
           
-          {/* Card 1: Palpites de Futebol */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-emerald-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm md:col-span-2">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-emerald-550/10 rounded-xl border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all duration-300">
-                  <Trophy className="w-6 h-6 text-emerald-400" />
-                </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-300 bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-800/25">
-                  ESTÁDIO DE IA: COPA DO MUNDO, COPA DO BRASIL E PRINCIPAIS JOGOS
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">
-                  ⚽ Palpites futebol jogue e ganhe!
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Dê palpites em tempo real nos principais confrontos mundiais e nacionais ou inicie sua própria partida customizada no estádio virtual. Aposte quanto quiser a partir de R$ 1,00, faça combos de múltiplos palpites (+20% taxa) e fature vidas extras, pontos e itens lendários para seu piloto!
-                </p>
-              </div>
+          <div className="absolute top-4 right-4 z-20 flex gap-1.5">
+            <button 
+              onClick={prevSlide}
+              className="p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl cursor-pointer transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-white" />
+            </button>
+            <button 
+              onClick={nextSlide}
+              className="p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl cursor-pointer transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-white" />
+            </button>
+          </div>
+
+          <div className="space-y-4 max-w-xl relative z-10">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider text-white bg-white/10 border border-white/10`}>
+              ⭐ Destaque Recomendado
+            </span>
+            <div className="space-y-2">
+              <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight group-hover:scale-[1.01] transition-transform duration-300">
+                {activeSlide.title}
+              </h2>
+              <p className="text-slate-300 text-xs md:text-sm leading-relaxed">
+                {activeSlide.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-white/10 z-10 relative">
+            <div className="flex items-center gap-4 text-xs font-mono text-slate-300">
+              <span className="flex items-center gap-1">
+                🏆 <span className="text-slate-400">Badge:</span> <strong className="text-amber-400">{activeSlide.badge}</strong>
+              </span>
+              <span className="flex items-center gap-1">
+                🪙 <span className="text-slate-400">Entrada:</span> <strong className="text-indigo-300">{activeSlide.cost}</strong>
+              </span>
             </div>
 
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Apostas em tempo real a partir de: <strong className="text-emerald-400">R$ 1,00</strong>
-              </div>
+            <button
+              onClick={() => {
+                playSound.click();
+                if (activeSlide.id === 'football') {
+                  if (setActiveTab) setActiveTab('football');
+                } else {
+                  handlePlayGame(activeSlide.id);
+                }
+              }}
+              className="px-5 py-2 bg-white text-slate-900 hover:bg-indigo-50 font-black text-xs rounded-xl shadow-lg shadow-white/5 hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wide flex items-center justify-center gap-1.5"
+            >
+              <PlayCircle className="w-4 h-4 text-indigo-600" />
+              <span>{activeSlide.actionText}</span>
+            </button>
+          </div>
+
+          {/* Slide Indicator Dots */}
+          <div className="absolute bottom-4 left-6 flex gap-1.5 z-20">
+            {carouselSlides.map((_, idx) => (
               <button
+                key={idx}
                 onClick={() => {
                   playSound.click();
-                  if (setActiveTab) setActiveTab('football');
+                  setCurrentSlide(idx);
                 }}
-                className="flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/15 hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
-                id="btn-nav-football"
-              >
-                <Trophy className="w-4 h-4" /> Acessar Portal de Futebol
-              </button>
-            </div>
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  idx === currentSlide ? 'w-4 bg-indigo-400' : 'bg-white/20 hover:bg-white/40'
+                }`}
+              />
+            ))}
           </div>
+        </div>
+      </div>
 
-          {/* Card 2: Pixel Jumper */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-indigo-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-indigo-550/10 rounded-xl border border-indigo-500/10 group-hover:bg-indigo-500/15 group-hover:border-indigo-500/25 transition-all duration-300">
-                  <Swords className="w-6 h-6 text-indigo-400" />
+      {/* CATEGORY SELECTOR & GAME GRID (Minimized blocks by Category) */}
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 font-mono flex items-center gap-1.5">
+            <Flame className="w-4 h-4 text-indigo-500 animate-pulse" />
+            Minijogos do Portal
+          </h3>
+
+          {/* Minimalist Category Selectors */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => { playSound.click(); setSelectedCategory('all'); }}
+              className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                selectedCategory === 'all' 
+                  ? 'bg-white text-slate-800 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => { playSound.click(); setSelectedCategory('action'); }}
+              className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                selectedCategory === 'action' 
+                  ? 'bg-white text-slate-800 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🕹️ Arcade
+            </button>
+            <button
+              onClick={() => { playSound.click(); setSelectedCategory('luck'); }}
+              className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                selectedCategory === 'luck' 
+                  ? 'bg-white text-slate-800 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🎰 Sorte & Esportes
+            </button>
+          </div>
+        </div>
+
+        {/* Minimized Bento Layout Card Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Card 1: Palpites de Futebol */}
+          {(selectedCategory === 'all' || selectedCategory === 'luck') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-emerald-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4 md:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                    <Trophy className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-black text-slate-800 group-hover:text-emerald-600 transition-colors tracking-tight">
+                        Palpites de Futebol Ao Vivo
+                      </h4>
+                      <span className="text-[8px] font-mono font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100 uppercase">Aposta</span>
+                    </div>
+                    <p className="text-slate-500 text-[11px] leading-relaxed max-w-2xl">
+                      Aposte em partidas reais da Copa do Brasil e ligas mundiais ou lance o simulador do estádio virtual. Retornos em vidas extras e pontos lendários!
+                    </p>
+                  </div>
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-indigo-300 bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-800/25">
-                  Dificuldade: Média
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-indigo-400 transition-colors tracking-tight">
-                  Pixel Jumper Arcade
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Um eletrizante teste de plataforma side-scroller. Controle o seu avatar customizado e salte sobre as barreiras elétricas vermelhas. Limpe a quantidade de obstáculos exigida pelo nível atual para passar ao próximo estágio!
-                </p>
-              </div>
-            </div>
-
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
-              </div>
-              <button
-                onClick={() => handlePlayGame('jumper')}
-                className="flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/15 hover:shadow-indigo-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                id="btn-play-jumper"
-              >
-                <PlayCircle className="w-4 h-4" /> Jogar
-              </button>
-            </div>
-          </div>
-
-          {/* Card 2: Neon Clicker */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-purple-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-purple-550/10 rounded-xl border border-purple-500/10 group-hover:bg-purple-500/15 group-hover:border-purple-500/25 transition-all duration-300">
-                  <Trophy className="w-6 h-6 text-purple-400" />
+                <div className="text-[10px] text-slate-400 font-mono sm:text-right shrink-0">
+                  Palpites a partir de: <strong className="text-emerald-600">R$ 1,00</strong>
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-full border border-purple-800/25">
-                  Dificuldade: Ágil
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                  🟢 Sistema de Cobertura Ativo
                 </span>
-              </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-purple-400 transition-colors tracking-tight">
-                  Neon Portal Clicker
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Teste seus reflexos com este ágil tap-to-earn. Esferas de energia de neon aparecem aleatoriamente no quadro. Estoure todas antes que desapareçam para acumular o score quota do estágio em até 15 segundos!
-                </p>
+                <button
+                  onClick={() => {
+                    playSound.click();
+                    if (setActiveTab) setActiveTab('football');
+                  }}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-600 text-emerald-600 hover:text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+                  id="btn-nav-football"
+                >
+                  Abrir Estádio <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+          )}
 
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-rose-400/90">1 Vida (em caso de derrota)</strong>
-              </div>
-              <button
-                onClick={() => handlePlayGame('clicker')}
-                className="flex items-center gap-1.5 px-4.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/15 hover:shadow-purple-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                id="btn-play-clicker"
-              >
-                <PlayCircle className="w-4 h-4" /> Jogar
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4: Cyber Roulette da Sorte */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-cyan-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-cyan-550/10 rounded-xl border border-cyan-500/10 group-hover:bg-cyan-500/15 group-hover:border-cyan-500/25 transition-all duration-300">
-                  <Star className="w-6 h-6 text-cyan-400" />
+          {/* Card 2: Super Mario 2D */}
+          {(selectedCategory === 'all' || selectedCategory === 'action') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-indigo-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="p-2.5 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                  <Swords className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-800/25">
-                  Giro: Equiprovável
-                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-800 group-hover:text-indigo-600 transition-colors tracking-tight">
+                      Super Mario Arcade 2D
+                    </h4>
+                    <span className="text-[8px] font-mono font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">Habilidade</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Nostálgica aventura de plataforma 2D side-scrolling com profundidade. Sobreviva a Goombas, colete moedas em caixas surpresa e suba no mastro!
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-cyan-400 transition-colors tracking-tight">
-                  Roleta Cyber da Sorte
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  A roleta da sorte está de volta com prêmios de alta conversão! Gire a roleta de 8 quadrantes por apenas 30 moedas e fature prêmios incríveis como 500 moedas extras, vidas extras e stage skips de fase!
-                </p>
-              </div>
-            </div>
 
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-cyan-400">🪙 30 Moedas</strong>
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Perda: <strong className="text-rose-500">1 Vida</strong>
+                </div>
+                <button
+                  onClick={() => handlePlayGame('jumper')}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/10 transition-all cursor-pointer"
+                  id="btn-play-jumper"
+                >
+                  Jogar Mario 2D
+                </button>
               </div>
-              <button
-                onClick={() => handlePlayGame('roulette')}
-                className="flex items-center gap-1.5 px-4.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/15 hover:shadow-cyan-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                id="btn-play-roulette"
-              >
-                <PlayCircle className="w-4 h-4" /> Girar Roleta
-              </button>
             </div>
-          </div>
+          )}
+
+          {/* Card 3: Neon Portal Clicker */}
+          {(selectedCategory === 'all' || selectedCategory === 'action') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-purple-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="p-2.5 bg-purple-50 rounded-xl border border-purple-100 text-purple-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-800 group-hover:text-purple-600 transition-colors tracking-tight">
+                      Neon Portal Clicker
+                    </h4>
+                    <span className="text-[8px] font-mono font-bold bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100 uppercase">Reflexo</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Estoure as esferas de energia de neon que aparecem de surpresa no painel antes de sumirem. Seja rápido para vencer no tempo limite!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Perda: <strong className="text-rose-500">1 Vida</strong>
+                </div>
+                <button
+                  onClick={() => handlePlayGame('clicker')}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md shadow-purple-600/10 transition-all cursor-pointer"
+                  id="btn-play-clicker"
+                >
+                  Jogar Clicker
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Card 4: Roleta Cyber da Sorte */}
+          {(selectedCategory === 'all' || selectedCategory === 'luck') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-cyan-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="p-2.5 bg-cyan-50 rounded-xl border border-cyan-100 text-cyan-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                  <Star className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-800 group-hover:text-cyan-600 transition-colors tracking-tight">
+                      Roleta Cyber da Sorte
+                    </h4>
+                    <span className="text-[8px] font-mono font-bold bg-cyan-50 text-cyan-600 px-1.5 py-0.5 rounded border border-cyan-100 uppercase">Sorte</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Gire a roleta de 8 posições equiprováveis por prêmios diretos. Ganhe vidas extras, moedas de ouro ou skips automáticos de fase!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Giro: <strong className="text-cyan-600">🪙 30 Moedas</strong>
+                </div>
+                <button
+                  onClick={() => handlePlayGame('roulette')}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-md shadow-cyan-600/10 transition-all cursor-pointer"
+                  id="btn-play-roulette"
+                >
+                  Girar Roleta
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Card 5: Fortune Tiger */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-amber-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-amber-550/10 rounded-xl border border-amber-500/10 group-hover:bg-amber-500/15 group-hover:border-amber-500/25 transition-all duration-300">
-                  <Flame className="w-6 h-6 text-amber-500" />
+          {(selectedCategory === 'all' || selectedCategory === 'luck') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-amber-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-100 text-amber-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                  <Flame className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-amber-300 bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-800/25">
-                  Multiplicador: Até 20x
-                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-800 group-hover:text-amber-600 transition-colors tracking-tight">
+                      Fortune Tiger VIP 🐯
+                    </h4>
+                    <span className="text-[8px] font-mono font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 uppercase">Cassino</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Ative a pata da fortuna dourada no clássico jogo do tigrinho 3x3. Alinhe os símbolos idênticos para multiplicar o saldo da rodada!
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-amber-400 transition-colors tracking-tight">
-                  Fortune Tiger VIP 🐯
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  O queridinho do Brasil chegou! Gire a pata de ouro do tigre, alinhe envelopes da sorte, sacos de ouro e fogos de artifício na grade 3x3 e fature multiplicadores explosivos no caça-níquel mais famoso das redes!
-                </p>
-              </div>
-            </div>
 
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-amber-400">Moedas (Sua Aposta)</strong>
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Entrada: <strong className="text-amber-600">Moedas (Giro)</strong>
+                </div>
+                <button
+                  onClick={() => handlePlayGame('tiger')}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md shadow-amber-500/10 transition-all cursor-pointer"
+                  id="btn-play-tiger"
+                >
+                  Girar Tigre
+                </button>
               </div>
-              <button
-                onClick={() => handlePlayGame('tiger')}
-                className="flex items-center gap-1.5 px-4.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-600/20 hover:shadow-amber-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                id="btn-play-tiger"
-              >
-                <PlayCircle className="w-4 h-4 text-slate-950" /> Soltar o Tigre
-              </button>
             </div>
-          </div>
+          )}
 
           {/* Card 6: Aviator Crash */}
-          <div className="group bg-gradient-to-b from-slate-900/60 to-slate-950/80 border border-slate-900/90 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:border-rose-500/25 hover:-translate-y-1 duration-300 flex flex-col justify-between backdrop-blur-sm">
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="p-3 bg-rose-550/10 rounded-xl border border-rose-500/10 group-hover:bg-rose-500/15 group-hover:border-rose-500/25 transition-all duration-300">
-                  <Plane className="w-6 h-6 text-rose-500" />
+          {(selectedCategory === 'all' || selectedCategory === 'luck') && (
+            <div className="group bg-white border border-slate-100 rounded-2xl p-4.5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)] hover:shadow-xl hover:shadow-slate-200/50 hover:border-rose-200 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="p-2.5 bg-rose-50 rounded-xl border border-rose-100 text-rose-600 shrink-0 self-start group-hover:scale-105 transition-transform">
+                  <Plane className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-rose-300 bg-rose-950/40 px-2.5 py-1 rounded-full border border-rose-800/25">
-                  Decolagem: Multiplicador Vivo
-                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-800 group-hover:text-rose-600 transition-colors tracking-tight">
+                      Aviator Crash ✈️
+                    </h4>
+                    <span className="text-[8px] font-mono font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 uppercase">Crash</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Decole o aviãozinho do multiplicador de moedas. Tenha nervos de aço e faça o resgate seguro antes que ele voe longe!
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <h4 className="text-lg font-black text-white group-hover:text-rose-400 transition-colors tracking-tight">
-                  Aviator Crash ✈️
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Decole o aviãozinho da sorte e assista o multiplicador subir rapidamente em tempo real! Retire seu investimento com lucro em moedas antes que o motor entre em pane e ele decole para longe do radar.
-                </p>
-              </div>
-            </div>
 
-            <div className="px-5 py-4 bg-slate-950/50 border-t border-slate-900/60 flex items-center justify-between">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Custo de jogo: <strong className="text-rose-400">Moedas (Sua Aposta)</strong>
+              <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                <div className="text-[10px] text-slate-400 font-mono">
+                  Giro: <strong className="text-rose-600">Sua Aposta</strong>
+                </div>
+                <button
+                  onClick={() => handlePlayGame('aviator')}
+                  className="flex items-center gap-1 px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl shadow-md shadow-rose-600/10 transition-all cursor-pointer"
+                  id="btn-play-aviator"
+                >
+                  Decolar Aviator
+                </button>
               </div>
-              <button
-                onClick={() => handlePlayGame('aviator')}
-                className="flex items-center gap-1.5 px-4.5 py-2 bg-rose-600 hover:bg-rose-550 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-600/15 hover:shadow-rose-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                id="btn-play-aviator"
-              >
-                <PlayCircle className="w-4 h-4 text-white" /> Decolar Saldo
-              </button>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
@@ -406,37 +583,37 @@ export const GamePortal: React.FC<GamePortalProps> = ({
       {/* Persistent Ad Monetization Banner */}
       <AdBanner position="bottom" />
 
-      {/* Guide Footer Info: Lives, Stage skips, etc */}
-      <div className="bg-slate-900/30 rounded-2xl border border-slate-900 p-5 space-y-4 backdrop-blur-xs">
-        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+      {/* Guide Footer Info */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 shadow-sm shadow-slate-200/30">
+        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-500 animate-pulse" />
           Como avançar se as fases estiverem difíceis?
         </h4>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-400">
-          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-            <h5 className="font-bold text-slate-200 flex items-center gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-500">
+          <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-150">
+            <h5 className="font-extrabold text-slate-700 flex items-center gap-1">
               ❤️ Comprar Vidas
             </h5>
-            <p className="leading-relaxed">
+            <p className="leading-relaxed text-[11px]">
               Ficou sem vidas? Adquira pacotes de vidas na Loja Segura por Pix/Cartão para reiniciar suas jogadas imediatamente de onde parou.
             </p>
           </div>
 
-          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-            <h5 className="font-bold text-slate-200 flex items-center gap-1">
+          <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-150">
+            <h5 className="font-extrabold text-slate-700 flex items-center gap-1">
               ⏩ Avançar de Fase
             </h5>
-            <p className="leading-relaxed">
+            <p className="leading-relaxed text-[11px]">
               Algum estágio com dificuldade de alta frequência? Use um crédito de Pulo de Fase (Stage Skip) para transicionar ao próximo nível e ainda receber moedas de bônus!
             </p>
           </div>
 
-          <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-            <h5 className="font-bold text-slate-200 flex items-center gap-1">
+          <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-150">
+            <h5 className="font-extrabold text-slate-700 flex items-center gap-1">
               🪙 Loja Integrada Segura
             </h5>
-            <p className="leading-relaxed">
+            <p className="leading-relaxed text-[11px]">
               Todos os checkouts na nossa loja integrada simulam os principais gateways de pagamento do mercado, protegendo dados com SSL ativo.
             </p>
           </div>

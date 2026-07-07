@@ -1,14 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { PlayerStats, TransactionLog, ShopItem } from './types';
 import { Header } from './components/Header';
-import { GamePortal } from './components/GamePortal';
-import { AvatarCustomizer } from './components/AvatarCustomizer';
-import { Shop } from './components/Shop';
-import { TransactionLogs } from './components/TransactionLogs';
 import { CheckoutModal } from './components/CheckoutModal';
 import { GoogleDriveSyncBar } from './components/GoogleDriveSyncBar';
-import { FootballBets } from './components/FootballBets';
-import { Cinema } from './components/Cinema';
 import { SHOP_ITEMS, SKINS, ACCESSORIES, AURAS } from './data/shopItems';
 import { ShieldCheck, Sparkles, X, Heart, Coins } from 'lucide-react';
 import { playSound } from './utils/audio';
@@ -16,6 +10,53 @@ import { getLevelForPoints, SKIN_LEVELS, ACCESSORY_LEVELS, AURA_LEVELS } from '.
 import { AuthModal, AppUser } from './components/AuthModal';
 import { googleSignOut } from './utils/googleDriveDb';
 import { getCleanUserId, getUserProfile, saveUserProfile, getUserLogs, addUserLog } from './utils/firebaseDb';
+
+// Dynamic Lazy Loaded Sub-Views for optimal on-demand rendering
+const GamePortal = lazy(() => import('./components/GamePortal').then(m => ({ default: m.GamePortal })));
+const AvatarCustomizer = lazy(() => import('./components/AvatarCustomizer').then(m => ({ default: m.AvatarCustomizer })));
+const Shop = lazy(() => import('./components/Shop').then(m => ({ default: m.Shop })));
+const TransactionLogs = lazy(() => import('./components/TransactionLogs').then(m => ({ default: m.TransactionLogs })));
+const FootballBets = lazy(() => import('./components/FootballBets').then(m => ({ default: m.FootballBets })));
+const Cinema = lazy(() => import('./components/Cinema').then(m => ({ default: m.Cinema })));
+
+interface TabLoaderProps {
+  tabName: string;
+}
+
+const TabLoader = ({ tabName }: TabLoaderProps) => {
+  const labelMap: Record<string, string> = {
+    games: 'Arena de Jogos',
+    avatar: 'Customizador de Piloto',
+    shop: 'Loja VIP & Pacotes',
+    logs: 'Histórico de Transações',
+    football: 'Portal de Palpites Futebol',
+    cinema: 'Cine Lounge & Vídeos',
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center animate-fadeIn">
+      <div className="relative w-20 h-20 mb-6">
+        {/* Pulsing neon rings */}
+        <div className="absolute inset-0 rounded-2xl border-2 border-indigo-500/20 animate-ping duration-[2s]" />
+        <div className="absolute -inset-2 rounded-2xl border border-purple-500/10 animate-pulse" />
+        <div className="absolute inset-2 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl shadow-lg flex items-center justify-center text-white">
+          <Sparkles className="w-8 h-8 animate-spin" style={{ animationDuration: '3s' }} />
+        </div>
+      </div>
+      <h3 className="text-lg font-extrabold text-slate-800 tracking-tight font-sans">
+        Carregando {labelMap[tabName] || tabName}...
+      </h3>
+      <p className="text-slate-400 text-xs font-mono mt-1.5 max-w-sm">
+        Otimizando recursos em tempo real para navegação instantânea.
+      </p>
+      
+      {/* Wave progress animation */}
+      <div className="w-48 h-1 bg-slate-200 rounded-full mt-4 overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 w-2/3 rounded-full animate-pulse" style={{ animationDuration: '1.5s' }} />
+      </div>
+    </div>
+  );
+};
 
 export default function App() {
   // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'
@@ -372,15 +413,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300">
       
       {/* Decorative Fluid Ambient Glowing Backdrops */}
-      <div className="absolute top-[-15%] left-[-15%] w-[60%] h-[50%] rounded-full bg-indigo-600/5 blur-[130px] pointer-events-none animate-float" />
-      <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[50%] rounded-full bg-purple-600/5 blur-[130px] pointer-events-none animate-float" style={{ animationDelay: '3s' }} />
-      <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-blue-600/3 blur-[140px] pointer-events-none animate-float" style={{ animationDelay: '6s' }} />
+      <div className="absolute top-[-15%] left-[-15%] w-[60%] h-[50%] rounded-full bg-indigo-500/10 blur-[130px] pointer-events-none animate-float" />
+      <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[50%] rounded-full bg-purple-500/10 blur-[130px] pointer-events-none animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[140px] pointer-events-none animate-float" style={{ animationDelay: '6s' }} />
       
       {/* Upper security announcement ribbon */}
-      <div className="bg-slate-950 border-b border-slate-900 px-4 py-1.5 text-center text-[10px] md:text-xs text-slate-400 font-mono flex items-center justify-center gap-2 relative z-10">
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 text-center text-[10px] md:text-xs text-slate-300 font-mono flex items-center justify-center gap-2 relative z-10 shadow-sm">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
         <span>SISTEMA DE PAGAMENTO CRIPTOGRAFADO ATIVO — CONEXÃO SEGURA SSL</span>
       </div>
@@ -428,72 +469,74 @@ export default function App() {
         </div>
       )}
 
-      {/* Sub-view switcher based on active tab */}
+      {/* Sub-view switcher based on active tab with real-time dynamic loading technology */}
       <main className="flex-1 pb-16">
-        {activeTab === 'games' && (
-          <GamePortal
-            stats={stats}
-            updateStats={updateStats}
-            addLog={addLog}
-            openShop={() => setActiveTab('shop')}
-            openCheckoutForQuickBuy={openCheckoutForQuickBuy}
-            loggedInUser={loggedInUser}
-            onOpenAuthModal={() => setShowAuthModal(true)}
-            realBalance={realBalance}
-            setRealBalance={setRealBalance}
-            withdrawLimit={withdrawLimit}
-            setWithdrawLimit={setWithdrawLimit}
-            setActiveTab={setActiveTab}
-          />
-        )}
-
-        {activeTab === 'football' && (
-          <div className="p-3 md:p-6 max-w-5xl mx-auto">
-            <FootballBets
+        <Suspense fallback={<TabLoader tabName={activeTab} />}>
+          {activeTab === 'games' && (
+            <GamePortal
               stats={stats}
               updateStats={updateStats}
               addLog={addLog}
+              openShop={() => setActiveTab('shop')}
+              openCheckoutForQuickBuy={openCheckoutForQuickBuy}
+              loggedInUser={loggedInUser}
+              onOpenAuthModal={() => setShowAuthModal(true)}
               realBalance={realBalance}
               setRealBalance={setRealBalance}
               withdrawLimit={withdrawLimit}
               setWithdrawLimit={setWithdrawLimit}
+              setActiveTab={setActiveTab}
             />
-          </div>
-        )}
+          )}
 
-        {activeTab === 'avatar' && (
-          <AvatarCustomizer
-            stats={stats}
-            updateStats={updateStats}
-            addLog={addLog}
-            openCheckoutForCoins={() => setActiveTab('shop')}
-          />
-        )}
+          {activeTab === 'football' && (
+            <div className="p-3 md:p-6 max-w-5xl mx-auto">
+              <FootballBets
+                stats={stats}
+                updateStats={updateStats}
+                addLog={addLog}
+                realBalance={realBalance}
+                setRealBalance={setRealBalance}
+                withdrawLimit={withdrawLimit}
+                setWithdrawLimit={setWithdrawLimit}
+              />
+            </div>
+          )}
 
-        {activeTab === 'shop' && (
-          <Shop
-            stats={stats}
-            updateStats={updateStats}
-            addLog={addLog}
-            openCheckout={(item) => setCheckoutItem(item)}
-          />
-        )}
+          {activeTab === 'avatar' && (
+            <AvatarCustomizer
+              stats={stats}
+              updateStats={updateStats}
+              addLog={addLog}
+              openCheckoutForCoins={() => setActiveTab('shop')}
+            />
+          )}
 
-        {activeTab === 'logs' && (
-          <TransactionLogs
-            logs={logs}
-          />
-        )}
+          {activeTab === 'shop' && (
+            <Shop
+              stats={stats}
+              updateStats={updateStats}
+              addLog={addLog}
+              openCheckout={(item) => setCheckoutItem(item)}
+            />
+          )}
 
-        {activeTab === 'cinema' && (
-          <Cinema
-            stats={stats}
-            updateStats={updateStats}
-            addLog={addLog}
-            loggedInUser={loggedInUser}
-            onOpenLogin={() => setShowAuthModal(true)}
-          />
-        )}
+          {activeTab === 'logs' && (
+            <TransactionLogs
+              logs={logs}
+            />
+          )}
+
+          {activeTab === 'cinema' && (
+            <Cinema
+              stats={stats}
+              updateStats={updateStats}
+              addLog={addLog}
+              loggedInUser={loggedInUser}
+              onOpenLogin={() => setShowAuthModal(true)}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Integrated secure checkout modal overlay */}
@@ -517,26 +560,26 @@ export default function App() {
       )}
 
       {/* Global persistent Footer */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-xs text-slate-500 mt-auto font-sans">
+      <footer className="bg-white border-t border-slate-200/80 py-10 text-xs text-slate-500 mt-auto font-sans shadow-inner">
         <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-6">
           
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-900">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-100">
             {/* Logo and support */}
             <div className="text-center md:text-left space-y-1.5">
-              <div className="text-sm font-black text-white tracking-wider font-mono">
-                🚀 GAME<span className="text-indigo-400">ZONE</span> ARCADE &amp; CINE
+              <div className="text-sm font-black text-slate-900 tracking-wider font-mono">
+                🚀 GAME<span className="text-indigo-600">ZONE</span> ARCADE &amp; CINE
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-500 font-medium">
                 Sua plataforma integrada de entretenimento virtual premium e streaming.
               </p>
             </div>
 
             {/* Quick links */}
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-slate-400 font-medium">
-              <button onClick={() => setActiveTab('games')} className="hover:text-indigo-400 transition-colors cursor-pointer">Arcade</button>
-              <button onClick={() => setActiveTab('cinema')} className="hover:text-red-500 transition-colors cursor-pointer">Sessão Cinema</button>
-              <button onClick={() => setActiveTab('football')} className="hover:text-emerald-400 transition-colors cursor-pointer">Futebol</button>
-              <button onClick={() => setActiveTab('shop')} className="hover:text-purple-400 transition-colors cursor-pointer">Loja VIP</button>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-slate-500 font-semibold">
+              <button onClick={() => setActiveTab('games')} className="hover:text-indigo-600 transition-colors cursor-pointer">Arcade</button>
+              <button onClick={() => setActiveTab('cinema')} className="hover:text-red-600 transition-colors cursor-pointer">Sessão Cinema</button>
+              <button onClick={() => setActiveTab('football')} className="hover:text-emerald-600 transition-colors cursor-pointer">Futebol</button>
+              <button onClick={() => setActiveTab('shop')} className="hover:text-purple-600 transition-colors cursor-pointer">Loja VIP</button>
             </div>
           </div>
 
@@ -544,16 +587,16 @@ export default function App() {
             {/* Contact and copyright */}
             <div className="text-center sm:text-left space-y-1">
               <p>© 2026 GameZone Inc. Todos os direitos reservados.</p>
-              <p>Contato &amp; Suporte: <a href="mailto:tiagojorgeengenheiro@gmail.com" className="text-indigo-400 hover:text-indigo-300 transition-colors underline select-all font-sans font-medium">tiagojorgeengenheiro@gmail.com</a></p>
+              <p>Contato &amp; Suporte: <a href="mailto:tiagojorgeengenheiro@gmail.com" className="text-indigo-600 hover:text-indigo-500 transition-colors underline select-all font-sans font-medium">tiagojorgeengenheiro@gmail.com</a></p>
             </div>
 
             {/* Security badges */}
-            <div className="flex flex-wrap items-center justify-center gap-3 bg-slate-900/40 border border-slate-900/60 px-3 py-1.5 rounded-xl text-[10px] text-slate-400">
-              <span className="flex items-center gap-1">🔒 SSL Criptografado</span>
-              <span className="text-slate-700">•</span>
-              <span>🛡️ PCI-DSS Nível 1</span>
-              <span className="text-slate-700">•</span>
-              <span className="text-emerald-400 font-bold">⚡ Pix Instantâneo BC</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 bg-slate-50/80 border border-slate-200/50 px-3 py-1.5 rounded-xl text-[10px] text-slate-500">
+              <span className="flex items-center gap-1 font-semibold text-slate-600">🔒 SSL Criptografado</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-600">🛡️ PCI-DSS Nível 1</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-emerald-600 font-extrabold">⚡ Pix Instantâneo BC</span>
             </div>
           </div>
 
