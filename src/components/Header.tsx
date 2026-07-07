@@ -27,8 +27,8 @@ import { AppUser } from './AuthModal';
 
 interface HeaderProps {
   stats: PlayerStats;
-  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema';
-  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema') => void;
+  activeTab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema' | 'gamezoneshop';
+  setActiveTab: (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema' | 'gamezoneshop') => void;
   openCheckoutForQuickBuy: (itemId: string) => void;
   realBalance?: number;
   loggedInUser: AppUser | null;
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema') => {
+  const handleTabClick = (tab: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema' | 'gamezoneshop') => {
     setActiveTab(tab);
     playSound.click();
   };
@@ -396,6 +396,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Video className="w-3.5 h-3.5 animate-pulse" />
           Sessão Cinema 🍿
+        </button>
+        <button
+          onClick={() => handleTabClick('gamezoneshop')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+            activeTab === 'gamezoneshop'
+              ? 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 border border-yellow-300 shadow-lg shadow-yellow-400/20 scale-[1.02]'
+              : 'text-slate-500 hover:text-amber-500 hover:bg-slate-100/50 border border-transparent'
+          }`}
+          id="tab-gamezoneshop"
+        >
+          <ShoppingBag className="w-3.5 h-3.5" />
+          GamezoneShop 🛍️
         </button>
         <button
           onClick={() => handleTabClick('football')}

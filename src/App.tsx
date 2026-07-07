@@ -18,6 +18,7 @@ const Shop = lazy(() => import('./components/Shop').then(m => ({ default: m.Shop
 const TransactionLogs = lazy(() => import('./components/TransactionLogs').then(m => ({ default: m.TransactionLogs })));
 const FootballBets = lazy(() => import('./components/FootballBets').then(m => ({ default: m.FootballBets })));
 const Cinema = lazy(() => import('./components/Cinema').then(m => ({ default: m.Cinema })));
+const GamezoneShop = lazy(() => import('./components/GamezoneShop').then(m => ({ default: m.GamezoneShop })));
 
 interface TabLoaderProps {
   tabName: string;
@@ -31,6 +32,7 @@ const TabLoader = ({ tabName }: TabLoaderProps) => {
     logs: 'Histórico de Transações',
     football: 'Portal de Palpites Futebol',
     cinema: 'Cine Lounge & Vídeos',
+    gamezoneshop: 'GamezoneShop E-commerce',
   };
 
   return (
@@ -59,8 +61,8 @@ const TabLoader = ({ tabName }: TabLoaderProps) => {
 };
 
 export default function App() {
-  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'
-  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'>('games');
+  // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema' | 'gamezoneshop'
+  const [activeTab, setActiveTab] = useState<'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema' | 'gamezoneshop'>('games');
 
   // User Authentication States
   const [loggedInUser, setLoggedInUser] = useState<AppUser | null>(() => {
@@ -536,6 +538,18 @@ export default function App() {
               onOpenLogin={() => setShowAuthModal(true)}
             />
           )}
+
+          {activeTab === 'gamezoneshop' && (
+            <GamezoneShop
+              stats={stats}
+              updateStats={updateStats}
+              addLog={addLog}
+              loggedInUser={loggedInUser}
+              onOpenLogin={() => setShowAuthModal(true)}
+              realBalance={realBalance}
+              setRealBalance={setRealBalance}
+            />
+          )}
         </Suspense>
       </main>
 
@@ -578,6 +592,7 @@ export default function App() {
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] text-slate-500 font-semibold">
               <button onClick={() => setActiveTab('games')} className="hover:text-indigo-600 transition-colors cursor-pointer">Arcade</button>
               <button onClick={() => setActiveTab('cinema')} className="hover:text-red-600 transition-colors cursor-pointer">Sessão Cinema</button>
+              <button onClick={() => setActiveTab('gamezoneshop')} className="hover:text-amber-500 transition-colors cursor-pointer">GamezoneShop</button>
               <button onClick={() => setActiveTab('football')} className="hover:text-emerald-600 transition-colors cursor-pointer">Futebol</button>
               <button onClick={() => setActiveTab('shop')} className="hover:text-purple-600 transition-colors cursor-pointer">Loja VIP</button>
             </div>
