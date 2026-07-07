@@ -15,6 +15,7 @@ import { playSound } from './utils/audio';
 import { getLevelForPoints, SKIN_LEVELS, ACCESSORY_LEVELS, AURA_LEVELS } from './utils/levelManager';
 import { AuthModal, AppUser } from './components/AuthModal';
 import { googleSignOut } from './utils/googleDriveDb';
+import { getCleanUserId, getUserProfile, saveUserProfile, getUserLogs, addUserLog } from './utils/firebaseDb';
 
 export default function App() {
   // Tabs: 'games' | 'avatar' | 'shop' | 'logs' | 'football' | 'cinema'
@@ -212,6 +213,43 @@ export default function App() {
     ];
   });
 
+  const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
+
+  // Load stats and logs from Firestore upon successful login
+  useEffect(() => {
+    if (loggedInUser) {
+      const userId = getCleanUserId(loggedInUser);
+      if (userId) {
+        setIsDbLoading(true);
+        getUserProfile(userId).then((profile) => {
+          if (profile) {
+            setStats(profile.stats);
+            setRealBalance(profile.realBalance);
+            setWithdrawLimit(profile.withdrawLimit);
+            triggerToast('📂 Perfil e estatísticas carregados do Firestore com sucesso!');
+          } else {
+            // Document does not exist in Firestore yet; create it!
+            saveUserProfile(userId, stats, realBalance, withdrawLimit)
+              .catch(err => console.error('Error writing initial profile to Firestore:', err));
+          }
+        }).catch(err => {
+          console.error('Error fetching user profile from Firestore:', err);
+        }).finally(() => {
+          setIsDbLoading(false);
+        });
+
+        // Load logs
+        getUserLogs(userId).then((userLogs) => {
+          if (userLogs && userLogs.length > 0) {
+            setLogs(userLogs);
+          }
+        }).catch(err => {
+          console.error('Error fetching logs from Firestore:', err);
+        });
+      }
+    }
+  }, [loggedInUser]);
+
   // Save changes to localStorage for state preservation
   useEffect(() => {
     localStorage.setItem('gamezone_player_stats', JSON.stringify(stats));
@@ -220,6 +258,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('gamezone_transaction_logs', JSON.stringify(logs));
   }, [logs]);
+
+  // Auto-save stats to Firestore on updates if logged in and not loading
+  useEffect(() => {
+    if (loggedInUser && !isDbLoading) {
+      const userId = getCleanUserId(loggedInUser);
+      if (userId) {
+        // Safe asynchronous background save
+        saveUserProfile(userId, stats, realBalance, withdrawLimit)
+          .catch(err => console.error('Error background-saving profile to Firestore:', err));
+      }
+    }
+  }, [stats, realBalance, withdrawLimit, loggedInUser, isDbLoading]);
 
   // Utility to append transaction logs securely with simulated SHA256 hashes
   const addLog = (
@@ -244,6 +294,14 @@ export default function App() {
     };
 
     setLogs((prev) => [...prev, newLog]);
+
+    if (loggedInUser) {
+      const userId = getCleanUserId(loggedInUser);
+      if (userId) {
+        addUserLog(userId, { ...newLog, userId } as any)
+          .catch(err => console.error('Error adding log to Firestore:', err));
+      }
+    }
   };
 
   // Helper to trigger direct quick-buys from headers/shortcuts

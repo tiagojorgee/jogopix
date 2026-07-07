@@ -27,6 +27,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
+import { getCleanUserId, addMovie, getMovies } from '../utils/firebaseDb';
 
 // Fictitious movie and series posters list
 interface MediaItem {
@@ -413,6 +414,25 @@ export const Cinema: React.FC<{
     }
   }, [carouselItems]);
 
+  // Fetch community movies on mount from Firestore
+  useEffect(() => {
+    const fetchCommunityMovies = async () => {
+      try {
+        const dbMovies = await getMovies();
+        if (dbMovies && dbMovies.length > 0) {
+          setUserUploadedMovies(prev => {
+            const localIds = new Set(prev.map(m => m.id));
+            const newFromDb = dbMovies.filter(m => !localIds.has(m.id));
+            return [...newFromDb, ...prev];
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching community movies from Firestore:', err);
+      }
+    };
+    fetchCommunityMovies();
+  }, []);
+
   // Handle local base64 file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -488,15 +508,30 @@ export const Cinema: React.FC<{
     };
 
     // Update state and persistence
-    const updated = [newMedia, ...userUploadedMovies];
+    const uploaderId = loggedInUser ? getCleanUserId(loggedInUser) || 'anonymous' : 'anonymous';
+    const uploaderName = loggedInUser?.name || 'Anônimo';
+
+    const finalMovieToSave: any = {
+      ...newMedia,
+      uploaderId,
+      uploaderName,
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [finalMovieToSave, ...userUploadedMovies];
     setUserUploadedMovies(updated);
     localStorage.setItem('gamezone_cinema_user_uploads', JSON.stringify(updated));
+
+    // Save to community cloud Firestore database
+    addMovie(finalMovieToSave).catch(err => {
+      console.error('Error saving uploaded movie to Firestore:', err);
+    });
 
     // Also trigger log in player stats
     addLog('cine_publish', `Publicou o filme "${uploadTitle}" otimizado por IA`, 100, 'coins');
     updateStats(prev => ({
       ...prev,
-      points: prev.points + 20, // Award experience points for creative contribution
+      points: (prev.points ?? 0) + 20, // Award experience points for creative contribution
       coins: prev.coins + 100   // Award coin bonus
     }));
 
