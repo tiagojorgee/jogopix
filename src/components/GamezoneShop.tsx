@@ -33,7 +33,14 @@ import {
   Tv,
   Award,
   Bell,
-  ThumbsUp
+  ThumbsUp,
+  BookOpen,
+  Download,
+  ArrowUp,
+  Check,
+  Copy,
+  Percent,
+  Smartphone
 } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
@@ -47,7 +54,7 @@ interface EcomProduct {
   platform: string; // e.g. "Mercado Livre", "Amazon", "Shopee", "AliExpress", "Kabum"
   link: string; // Purchase link
   imageUrl: string;
-  category: string; // 'perifericos' | 'hardwares' | 'cadeiras' | 'consoles'
+  category: string; // 'perifericos' | 'hardwares' | 'cadeiras' | 'consoles' | 'ebook'
   rating: number;
   reviewsCount: number;
   freeShipping: boolean;
@@ -56,6 +63,8 @@ interface EcomProduct {
   stock: number;
   isCustom?: boolean; // added by the user
   isDailyPick?: boolean; // daily handpicked choice
+  ebookContent?: string; // eBook simulated content / preview / download link
+  author?: string; // eBook author
 }
 
 // Simulated Video Review item
@@ -239,6 +248,44 @@ const INITIAL_PRODUCTS: EcomProduct[] = [
     discount: 50,
     estimatedDelivery: 'Envio Digital Imediato ⚡',
     stock: 999
+  },
+  {
+    id: 'ebook-dev-gamer',
+    title: 'Guia do Desenvolvedor Indie: Do Zero ao Primeiro Jogo',
+    description: 'Aprenda as principais estratégias de mercado, desenvolvimento ágil com Unity/Unreal e como publicar seu jogo na Steam e consoles.',
+    price: 39.90,
+    type: 'dropship',
+    platform: 'Gamezone Editorial',
+    link: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=400',
+    category: 'ebook',
+    rating: 4.9,
+    reviewsCount: 88,
+    freeShipping: true,
+    discount: 20,
+    estimatedDelivery: 'Envio Digital Imediato ⚡',
+    stock: 9999,
+    ebookContent: 'PARABÉNS! Você adquiriu o ebook completo "Guia do Desenvolvedor Indie".\n\nCapítulo 1: O Planejamento e Idealização\nTudo começa com um Game Design Document (GDD) sólido. Documente suas ideias...\n\nCapítulo 2: Escolhendo a Game Engine\nUnity é excelente para jogos 2D e mobile. Unreal para fidelidade gráfica 3D. Godot para leveza...\n\nCapítulo 3: Marketing e Lançamento\nComece a divulgar na Steam 6 meses antes. Acumule Wishlists!',
+    author: 'Tiago Jorge (Proprietário)'
+  },
+  {
+    id: 'ebook-setup-gamer',
+    title: 'Setup Gamer de Sucesso: Iluminação, Organização e Refrigeração',
+    description: 'Dicas práticas do proprietário para montar o setup dos sonhos gastando pouco. Ergonomia de cadeiras e controle térmico de hardwares.',
+    price: 19.90,
+    type: 'dropship',
+    platform: 'Gamezone Editorial',
+    link: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=400',
+    category: 'ebook',
+    rating: 4.8,
+    reviewsCount: 45,
+    freeShipping: true,
+    discount: 0,
+    estimatedDelivery: 'Envio Digital Imediato ⚡',
+    stock: 9999,
+    ebookContent: 'BEM-VINDO ao guia completo de Setup Gamer de Sucesso!\n\nCapítulo 1: Ergonomia\nA altura do seu monitor deve ficar alinhada aos olhos. Suas costas precisam de suporte lombar ativo...\n\nCapítulo 2: Iluminação Inteligente\nUse fita de led RGB endereçável atrás da mesa para criar um brilho ambiente indireto, reduzindo o cansaço visual...\n\nCapítulo 3: Organização de Cabos (Cable Management)\nFixe calhas sob a mesa para organizar réguas e fontes. Agrupe cabos por espirais organizadoras.',
+    author: 'Tiago Jorge (Proprietário)'
   }
 ];
 
@@ -351,9 +398,63 @@ export const GamezoneShop: React.FC<{
   // Create product panel visibility
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   
+  // Owner privileges (Modo Proprietário)
+  const [ownerMode, setOwnerMode] = useState<boolean>(() => {
+    return localStorage.getItem('gamezone_owner_mode') === 'true';
+  });
+
+  const isOwner = loggedInUser?.email === 'tiagojorgeengenheiro@gmail.com' || ownerMode;
+
+  const handleToggleOwnerMode = () => {
+    playSound.click();
+    setOwnerMode(prev => {
+      const newVal = !prev;
+      localStorage.setItem('gamezone_owner_mode', String(newVal));
+      return newVal;
+    });
+  };
+
+  // Purchased eBooks
+  const [purchasedEbooks, setPurchasedEbooks] = useState<string[]>(() => {
+    const cached = localStorage.getItem('gamezone_purchased_ebooks');
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gamezone_purchased_ebooks', JSON.stringify(purchasedEbooks));
+  }, [purchasedEbooks]);
+
+  const [selectedReadEbook, setSelectedReadEbook] = useState<EcomProduct | null>(null);
+
   // Checkout Modal State
   const [checkoutProduct, setCheckoutProduct] = useState<EcomProduct | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'saldo' | 'moedas'>('saldo');
+  const [paymentMethod, setPaymentMethod] = useState<'saldo' | 'moedas' | 'pix'>('saldo');
+
+  // Coupon inputs
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0); // percent, e.g. 15 for 15%
+  const [couponMessage, setCouponMessage] = useState('');
+
+  // Pix simulation states
+  const [isPixLoading, setIsPixLoading] = useState(false);
+  const [isPixPaid, setIsPixPaid] = useState(false);
+  const [pixCountdown, setPixCountdown] = useState(300); // 5 min
+
+  // Scroll Progress and Back-to-top Animation Script
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalScroll > 0) {
+        setScrollProgress((window.scrollY / totalScroll) * 100);
+      }
+      setShowBackToTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Address Info for simulated dropshipping checkout
   const [cep, setCep] = useState('');
